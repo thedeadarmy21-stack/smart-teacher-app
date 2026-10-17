@@ -24,14 +24,16 @@ const Scan = () => {
     const timer = setTimeout(() => {
       if (scannerRef.current) scannerRef.current.clear().catch(e => console.log(e));
 
-      // Naya Scanner initialize karo
       const scanner = new Html5QrcodeScanner('reader', {
-        qrbox: { width: 250, height: 250 },
-        fps: 15,
-        aspectRatio: 1.0, // Box ko square rakhega
-        showTorchButtonIfSupported: true,
-      });
-
+  qrbox: { width: 250, height: 250 },
+  fps: 15,
+  aspectRatio: 1.0,
+  showTorchButtonIfSupported: true,
+  // 👇 Ye line force karegi ke sirf Back Camera khule
+  videoConstraints: {
+    facingMode: { exact: "environment" } 
+  }
+});
       scannerRef.current = scanner;
 
       scanner.render(
