@@ -12,7 +12,6 @@ const Scan = () => {
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
 
-  // School ka naam fix kiya hai
   const schoolName = "Smart School";
 
   useEffect(() => {
@@ -25,9 +24,12 @@ const Scan = () => {
     const timer = setTimeout(() => {
       if (scannerRef.current) scannerRef.current.clear().catch(e => console.log(e));
 
+      // Naya Scanner initialize karo
       const scanner = new Html5QrcodeScanner('reader', {
         qrbox: { width: 250, height: 250 },
         fps: 15,
+        aspectRatio: 1.0, // Box ko square rakhega
+        showTorchButtonIfSupported: true,
       });
 
       scannerRef.current = scanner;
@@ -70,7 +72,8 @@ const Scan = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col pb-20">
-      {/* Premium Header */}
+      
+      {/* Header */}
       <header className="bg-slate-800/80 backdrop-blur-md text-white p-4 shadow-lg rounded-b-3xl flex justify-between items-center sticky top-0 z-20 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30">
@@ -86,19 +89,21 @@ const Scan = () => {
         </div>
       </header>
 
-      {/* Scanner Main Area */}
+      {/* Main Scanner Area */}
       <main className="flex-1 p-4 flex flex-col items-center mt-4">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
           {/* Scanner View */}
           {!scanResult && (
             <div className="p-4 relative">
-              {/* Animated Scan Laser Line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-scanline z-10 pointer-events-none rounded-full"></div>
               
-              <div id="reader" className="w-full rounded-2xl overflow-hidden border-2 border-slate-600 bg-slate-900"></div>
+              {/* Custom Laser Line */}
+              <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
               
-              <div className="mt-5 text-center">
+              {/* html5-qrcode yahan render hoga */}
+              <div id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></div>
+              
+              <div className="mt-6 text-center">
                 <p className="text-slate-300 text-sm font-medium flex items-center justify-center gap-2">
                   <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -147,7 +152,7 @@ const Scan = () => {
                 <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Roll Number</p>
                 <p className="text-slate-200 text-lg font-semibold">{scanResult.rollNumber}</p>
                 <div className="h-px bg-slate-800 my-3"></div>
-                <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Time</p>
+                <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Time (24-Hour)</p>
                 <p className="text-blue-400 text-lg font-bold">{scanResult.timeIn}</p>
               </div>
               
@@ -161,6 +166,10 @@ const Scan = () => {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around p-3 pb-safe z-20">
+        <button onClick={() => navigate('/home')} className="flex flex-col items-center text-slate-500 hover:text-blue-500 transition-colors">
+          <span className="text-2xl mb-1">🏠</span>
+          <span className="text-[10px] font-bold tracking-wider">HOME</span>
+        </button>
         <button className="flex flex-col items-center text-blue-500">
           <span className="text-2xl mb-1">📷</span>
           <span className="text-[10px] font-bold tracking-wider">SCAN</span>
