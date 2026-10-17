@@ -31,7 +31,7 @@ const Login = () => {
 
       localStorage.setItem('teacherToken', response.data.token);
       localStorage.setItem('teacherData', JSON.stringify(response.data.teacher));
-      navigate('/scan');
+      navigate('/home');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Server check karo.');
     } finally {
