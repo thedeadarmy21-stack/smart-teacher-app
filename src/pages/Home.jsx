@@ -6,18 +6,18 @@ const Home = () => {
   const navigate = useNavigate();
   const [todayCount, setTodayCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passData, setPassData] = useState({ currentPassword: '', newPassword: '' });
+  const [passError, setPassError] = useState('');
+  const [passSuccess, setPassSuccess] = useState('');
+  
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
-  
-  // School ka naam
   const schoolName = "Smart School";
-  // Aaj ki date
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   useEffect(() => {
     if (!token) navigate('/');
-    
-    // Aaj ki attendance count laane ki API call (Hum iske liye ek naya chhota API banayenge)
     const fetchTodayAttendance = async () => {
       try {
         const res = await axios.get('https://smart-attendance-backend-one.vercel.app/api/attendance/today', {
@@ -38,8 +38,49 @@ const Home = () => {
     navigate('/');
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPassError('');
+    setPassSuccess('');
+    try {
+      await axios.put('https://smart-attendance-backend-one.vercel.app/api/auth/change-password', passData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPassSuccess('Password changed successfully!');
+      setPassData({ currentPassword: '', newPassword: '' });
+      setTimeout(() => setShowPasswordModal(false), 2000);
+    } catch (err) {
+      setPassError(err.response?.data?.message || 'Failed to change password');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col pb-20">
+    <div className="min-h-screen bg-slate-900 flex flex-col pb-20 relative">
+      {/* CHANGE PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
+            <h3 className="text-xl font-bold text-white mb-4">Change Password</h3>
+            {passError && <div className="bg-red-900/50 text-red-400 p-3 rounded-xl mb-4 text-sm font-bold text-center border border-red-800">{passError}</div>}
+            {passSuccess && <div className="bg-emerald-900/50 text-emerald-400 p-3 rounded-xl mb-4 text-sm font-bold text-center border border-emerald-800">{passSuccess}</div>}
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-400 mb-2">Current Password</label>
+                <input type="password" value={passData.currentPassword} onChange={(e) => setPassData({...passData, currentPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white" required />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-400 mb-2">New Password</label>
+                <input type="password" value={passData.newPassword} onChange={(e) => setPassData({...passData, newPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white" required />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-xl hover:bg-slate-600 transition">Cancel</button>
+                <button type="submit" className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-500 transition">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Premium Header */}
       <header className="bg-slate-800 p-6 rounded-b-3xl shadow-lg border-b border-slate-700">
         <div className="flex justify-between items-center mb-6">
@@ -52,9 +93,14 @@ const Home = () => {
               <p className="text-sm text-blue-400 font-medium">Teacher Dashboard</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowPasswordModal(true)} className="text-slate-400 hover:text-blue-400 p-2" title="Change Password">
+              🔐
+            </button>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 p-2" title="Logout">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
+          </div>
         </div>
         
         <div>
@@ -65,7 +111,6 @@ const Home = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-6">
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
             <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Today's Date</p>
@@ -77,7 +122,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Big Scan Button */}
         <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl text-center mb-8">
           <div className="h-20 w-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
              <span className="text-4xl text-blue-400">📷</span>
@@ -94,7 +138,6 @@ const Home = () => {
           </button>
         </div>
 
-        {/* Instructions */}
         <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50">
           <h4 className="text-slate-300 font-bold mb-3 text-sm">Quick Instructions:</h4>
           <ul className="text-slate-400 text-sm space-y-2">
@@ -105,7 +148,6 @@ const Home = () => {
         </div>
       </main>
 
-      {/* Bottom Navigation (App Style) */}
       <nav className="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around p-3 pb-safe z-20">
         <button className="flex flex-col items-center text-blue-500">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
