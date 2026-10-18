@@ -59,7 +59,7 @@ const Home = () => {
         
         <div>
           <p className="text-slate-400 text-sm">Welcome back,</p>
-          <h2 className="text-2xl font-bold text-white">{teacherData.name === 'Sir Bilal' ? 'Sarkar Sir' : (teacherData.name || 'Sarkar Sir')}</h2>
+          <h2 className="text-2xl font-bold text-white">{teacherData.name === 'Sir Bilal' ? 'Sir Sarkar' : (teacherData.name || 'Sir Sarkar')}</h2>
         </div>
       </header>
 

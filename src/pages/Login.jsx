@@ -15,14 +15,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Browser ka unique ID banao (Device Lock ke liye)
       let deviceId = localStorage.getItem('deviceId');
       if (!deviceId) {
         deviceId = "DEV-" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
         localStorage.setItem('deviceId', deviceId);
       }
 
-      // 👇 Yahan apna Vercel wala URL daala hai
       const response = await axios.post('https://smart-attendance-backend-one.vercel.app/api/auth/login', {
         username,
         password,
@@ -44,7 +42,7 @@ const Login = () => {
       <div className="bg-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎓</div>
-          <h2 className="text-2xl font-bold text-white">Sarkar Sir Login</h2>
+          <h2 className="text-2xl font-bold text-white">Sir Sarkar Login</h2>
           <p className="text-slate-400 text-sm mt-1">Smart Attendance App</p>
         </div>
         
@@ -58,7 +56,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              placeholder="bilal01"
+              placeholder="Enter username" // 👈 Placeholder change kiya
               required
             />
           </div>
@@ -70,7 +68,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              placeholder="••••••"
+              placeholder="Enter password" // 👈 Placeholder change kiya
               required
             />
           </div>
