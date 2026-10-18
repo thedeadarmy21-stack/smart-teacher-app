@@ -44,7 +44,7 @@ const Login = () => {
       <div className="bg-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎓</div>
-          <h2 className="text-2xl font-bold text-white">Teacher Login</h2>
+          <h2 className="text-2xl font-bold text-white">Sarkar Sir Login</h2>
           <p className="text-slate-400 text-sm mt-1">Smart Attendance App</p>
         </div>
         
