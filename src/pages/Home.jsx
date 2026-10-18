@@ -6,10 +6,6 @@ const Home = () => {
   const navigate = useNavigate();
   const [todayCount, setTodayCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  
-  const [profileData, setProfileData] = useState({ newUsername: '', currentPassword: '', newPassword: '' });
-  const [msg, setMsg] = useState({ type: '', text: '' });
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
@@ -38,65 +34,8 @@ const Home = () => {
     navigate('/');
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    setMsg({ type: '', text: '' });
-    try {
-      const res = await axios.put('https://smart-attendance-backend-one.vercel.app/api/auth/update-profile', profileData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      localStorage.setItem('teacherData', JSON.stringify(res.data.teacher));
-      
-      setMsg({ type: 'success', text: 'Profile updated successfully!' });
-      setTimeout(() => {
-        setShowModal(false);
-        window.location.reload(); 
-      }, 1500);
-      
-    } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to update profile' });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col pb-20 relative">
-      
-      {/* EDIT PROFILE MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
-            <h3 className="text-xl font-bold text-white mb-2">Edit Profile</h3>
-            <p className="text-sm text-slate-400 mb-6">Change username or password.</p>
-            
-            {msg.text && (
-              <div className={`p-3 rounded-xl mb-4 text-sm font-bold text-center border ${msg.type === 'success' ? 'bg-emerald-900/50 text-emerald-400 border-emerald-800' : 'bg-red-900/50 text-red-400 border-red-800'}`}>
-                {msg.text}
-              </div>
-            )}
-            
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-400 mb-2">New Username</label>
-                <input type="text" value={profileData.newUsername} onChange={(e) => setProfileData({...profileData, newUsername: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white" placeholder="Leave blank to keep current" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-400 mb-2">Current Password</label>
-                <input type="password" value={profileData.currentPassword} onChange={(e) => setProfileData({...profileData, currentPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white" required />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-400 mb-2">New Password</label>
-                <input type="password" value={profileData.newPassword} onChange={(e) => setProfileData({...profileData, newPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-white" placeholder="Leave blank to keep current" />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-xl hover:bg-slate-600 transition">Cancel</button>
-                <button type="submit" className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-500 transition">Update</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       <header className="bg-slate-800 p-6 rounded-b-3xl shadow-lg border-b border-slate-700">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
@@ -108,14 +47,9 @@ const Home = () => {
               <p className="text-sm text-blue-400 font-medium">Teacher Dashboard</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowModal(true)} className="text-slate-400 hover:text-blue-400 p-2" title="Edit Profile">
-              ⚙️
-            </button>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 p-2" title="Logout">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            </button>
-          </div>
+          <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 p-2" title="Logout">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          </button>
         </div>
         
         <div>
