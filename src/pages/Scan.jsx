@@ -31,34 +31,55 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate]);
 
+  // 🚀 Camera Start Karne ka Function
+  const startScanner = () => {
+    // Pehle purana scanner clear karo (agar hai to)
+    if (scannerRef.current) {
+      scannerRef.current.clear().catch(e => console.log("Clear error:", e));
+      scannerRef.current = null;
+    }
+
+    // Thoda delay taaki DOM div ready ho jaye
+    setTimeout(() => {
+      // Double check: Agar div pehle se clear hai to hi start karo
+      if (document.getElementById('reader').innerHTML !== '') {
+        document.getElementById('reader').innerHTML = '';
+      }
+
+      try {
+        const scanner = new Html5QrcodeScanner('reader', {
+          qrbox: { width: 250, height: 250 },
+          fps: 15,
+          aspectRatio: 1.0,
+          showTorchButtonIfSupported: true,
+          videoConstraints: { facingMode: { exact: "environment" } }
+        });
+
+        scannerRef.current = scanner;
+
+        scanner.render(
+          async (decodedText) => {
+            scanner.pause(true);
+            handleScanSuccess(decodedText);
+          },
+          () => {} // Ignore errors
+        );
+      } catch (err) {
+        console.error("Scanner Start Error:", err);
+      }
+    }, 300); // 300ms delay
+  };
+
+  // Page load hote hi scanner start karo
   useEffect(() => {
     if (!token) return;
+    startScanner();
 
-    const timer = setTimeout(() => {
-      if (scannerRef.current) scannerRef.current.clear().catch(e => console.log(e));
-
-      const scanner = new Html5QrcodeScanner('reader', {
-        qrbox: { width: 250, height: 250 },
-        fps: 15,
-        aspectRatio: 1.0,
-        showTorchButtonIfSupported: true,
-        videoConstraints: { facingMode: { exact: "environment" } }
-      });
-
-      scannerRef.current = scanner;
-
-      scanner.render(
-        async (decodedText) => {
-          scanner.pause(true);
-          handleScanSuccess(decodedText);
-        },
-        () => {} 
-      );
-    }, 100);
-
+    // Cleanup: Jab page chhodo to camera band karo
     return () => {
-      clearTimeout(timer);
-      if (scannerRef.current) scannerRef.current.clear().catch(e => console.log(e));
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(e => console.log(e));
+      }
     };
   }, [token]);
 
@@ -84,13 +105,11 @@ const Scan = () => {
     }
   };
 
-  // 🚀 NAYA FIX: Reload ki jagah route change karo
+  // 🚀 Reset Scanner (Bina page reload kiye)
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    navigate('/scan', { replace: true }); 
-    // Agar camera wapas start nahi ho raha to neeche wali line uncomment karo:
-    // window.location.href = '/scan';
+    startScanner(); // Camera ko wapas start karo
   };
 
   return (
@@ -120,7 +139,7 @@ const Scan = () => {
       <main className="flex-1 p-4 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
-          {!scanResult && (
+          {!scanResult && !loading && !error && (
             <div className="p-4 relative">
               <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
               <div id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></div>
