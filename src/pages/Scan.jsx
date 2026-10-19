@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Scan = () => {
@@ -9,14 +9,22 @@ const Scan = () => {
   const [loading, setLoading] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const scannerRef = useRef(null);
   
   const token = localStorage.getItem('teacherToken');
   const schoolName = "Smart School";
 
-  // Page load hote hi aaj ka count laao
+  // 👇 URL se Class nikaalo
+  const queryParams = new URLSearchParams(location.search);
+  const targetClass = queryParams.get('class'); 
+
   useEffect(() => {
     if (!token) navigate('/');
+    if (!targetClass) {
+      alert("No class selected. Redirecting to home.");
+      navigate('/home');
+    }
     
     const fetchCount = async () => {
       try {
@@ -29,19 +37,15 @@ const Scan = () => {
       }
     };
     fetchCount();
-  }, [token, navigate]);
+  }, [token, navigate, targetClass]);
 
-  // 🚀 Camera Start Karne ka Function
   const startScanner = () => {
-    // Pehle purana scanner clear karo (agar hai to)
     if (scannerRef.current) {
       scannerRef.current.clear().catch(e => console.log("Clear error:", e));
       scannerRef.current = null;
     }
 
-    // Thoda delay taaki DOM div ready ho jaye
     setTimeout(() => {
-      // Double check: Agar div pehle se clear hai to hi start karo
       if (document.getElementById('reader').innerHTML !== '') {
         document.getElementById('reader').innerHTML = '';
       }
@@ -62,26 +66,24 @@ const Scan = () => {
             scanner.pause(true);
             handleScanSuccess(decodedText);
           },
-          () => {} // Ignore errors
+          () => {} 
         );
       } catch (err) {
         console.error("Scanner Start Error:", err);
       }
-    }, 300); // 300ms delay
+    }, 300);
   };
 
-  // Page load hote hi scanner start karo
   useEffect(() => {
-    if (!token) return;
+    if (!token || !targetClass) return;
     startScanner();
 
-    // Cleanup: Jab page chhodo to camera band karo
     return () => {
       if (scannerRef.current) {
         scannerRef.current.clear().catch(e => console.log(e));
       }
     };
-  }, [token]);
+  }, [token, targetClass]);
 
   const handleScanSuccess = async (decodedText) => {
     if (loading) return;
@@ -90,9 +92,10 @@ const Scan = () => {
     setScanResult(null);
 
     try {
+      // 👇 Backend ko Class bhi bhejo
       const response = await axios.post(
         'https://smart-attendance-backend-one.vercel.app/api/attendance/scan',
-        { qrCode: decodedText },
+        { qrCode: decodedText, targetClass: targetClass }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setScanResult(response.data);
@@ -105,17 +108,14 @@ const Scan = () => {
     }
   };
 
-  // 🚀 Reset Scanner (Bina page reload kiye)
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    startScanner(); // Camera ko wapas start karo
+    startScanner(); 
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col pb-20">
-      
-      {/* Premium Header */}
       <header className="bg-slate-800/80 backdrop-blur-md text-white p-4 shadow-lg rounded-b-3xl flex justify-between items-center sticky top-0 z-20 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30">
@@ -123,7 +123,7 @@ const Scan = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-wide">{schoolName}</h1>
-            <p className="text-xs text-slate-400">Scan Student ID</p>
+            <p className="text-xs text-blue-400 font-bold">Scanning Class {targetClass}</p>
           </div>
         </div>
         
