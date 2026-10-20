@@ -40,25 +40,31 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass]);
 
-  // 🚀 Camera Start Function
-  useEffect(() => {
-    if (!token || !targetClass) return;
+  // 🚀 CAMERA START KARNE KA FUNCTION
+  const startCamera = () => {
+    // Agar purana camera chal raha hai to band karo
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+      controlsRef.current = null;
+    }
 
-    const timer = setTimeout(() => {
+    // Thoda delay taaki DOM ready ho jaye
+    setTimeout(() => {
       try {
         const codeReader = new BrowserMultiFormatReader();
         codeReaderRef.current = codeReader;
 
         codeReader.decodeFromVideoDevice(
-          undefined, 
-          'reader',  
+          undefined, // Default camera
+          'reader',  // Jahan video dikhegi
           (result, err) => {
             if (result) {
+              // QR Scan ho gaya
               if (controlsRef.current) controlsRef.current.stop();
               handleScanSuccess(result.getText());
             }
             if (err && !(err instanceof Error)) {
-              // Ignore
+              // Ignore normal errors
             }
           }
         ).then((controls) => {
@@ -72,10 +78,16 @@ const Scan = () => {
         console.error("Scanner Init Error:", err);
         setError("Camera start nahi ho raha.");
       }
-    }, 500);
+    }, 500); // 500ms delay
+  };
 
+  // Page load hote hi camera start karo
+  useEffect(() => {
+    if (!token || !targetClass) return;
+    startCamera();
+
+    // Cleanup
     return () => {
-      clearTimeout(timer);
       if (controlsRef.current) {
         controlsRef.current.stop();
       }
@@ -104,11 +116,13 @@ const Scan = () => {
     }
   };
 
-  // 🚀 FIXED: Reload ki jagah navigate use karo
+  // 🚀 NAYA FIX: Next Student par camera dobara start karo
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    // Ye line page ko refresh nahi karegi, balke wapas usi page par le aayegi
+    // 1. Pehle camera start karne wala function call karo
+    startCamera();
+    // 2. Phir URL update karo taaki page fresh lage
     navigate(`/scan?class=${targetClass}`, { replace: true });
   };
 
@@ -140,6 +154,7 @@ const Scan = () => {
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
             
+            {/* 👇 ZXing video yahan banayega */}
             <video id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></video>
             
             <div className="mt-6 text-center">
