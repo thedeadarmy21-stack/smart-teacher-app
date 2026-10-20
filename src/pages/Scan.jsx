@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useEffect, useState, useRef } from 'react'; // 👈 useRef add kiya
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -10,7 +10,10 @@ const Scan = () => {
   const [todayCount, setTodayCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const scannerRef = useRef(null);
+  
+  // 👇 Refs define kiye
+  const codeReaderRef = useRef(null);
+  const controlsRef = useRef(null);
   
   const token = localStorage.getItem('teacherToken');
   const schoolName = "Smart School";
@@ -38,55 +41,46 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass]);
 
-  // 🚀 FINAL FIX: Camera container ko React ke control se bahar rakho
+  // 🚀 ZXing Library se Camera Start karo
   useEffect(() => {
     if (!token || !targetClass) return;
 
     const timer = setTimeout(() => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.log("Clear error:", e));
-        scannerRef.current = null;
-      }
-
-      // 'reader' div ko dhundo
-      const readerDiv = document.getElementById('reader');
-      if (!readerDiv) return;
-
-      // Isko React ke control se bahar nikaal do
-      readerDiv.innerHTML = '';
-
       try {
-        const scanner = new Html5QrcodeScanner('reader', {
-          qrbox: { width: 250, height: 250 },
-          fps: 10,
-          aspectRatio: 1.0,
-          showTorchButtonIfSupported: true,
-          videoConstraints: { 
-            facingMode: "environment" 
+        const codeReader = new BrowserMultiFormatReader();
+        codeReaderRef.current = codeReader;
+
+        // Camera start karo (Back camera ke liye 'environment')
+        codeReader.decodeFromVideoDevice(
+          undefined, // Default camera (ya environment)
+          'reader',  // Jahan video dikhegi
+          (result, err) => {
+            if (result) {
+              // QR Scan ho gaya
+              if (controlsRef.current) controlsRef.current.stop();
+              handleScanSuccess(result.getText());
+            }
+            if (err && !(err instanceof Error)) {
+              // Ignore normal errors
+            }
           }
+        ).then((controls) => {
+          controlsRef.current = controls;
+        }).catch((err) => {
+          console.error("Camera Start Error:", err);
+          setError("Camera start nahi ho raha. Page refresh karein.");
         });
 
-        scannerRef.current = scanner;
-
-        scanner.render(
-          async (decodedText) => {
-            scanner.pause(true);
-            handleScanSuccess(decodedText);
-          },
-          (err) => {
-            // Errors ignore karo
-          } 
-        );
       } catch (err) {
-        console.error("Scanner Start Error:", err);
-        setError("Camera start nahi ho raha. Page refresh karein.");
+        console.error("Scanner Init Error:", err);
+        setError("Camera start nahi ho raha.");
       }
-    }, 800); // Delay badha diya taaki DOM pakka ready ho
+    }, 500);
 
     return () => {
       clearTimeout(timer);
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.log(e));
+      if (controlsRef.current) {
+        controlsRef.current.stop();
       }
     };
   }, [token, targetClass]);
@@ -107,7 +101,7 @@ const Scan = () => {
       setTodayCount(prev => prev + 1);
     } catch (err) {
       setError(err.response?.data?.message || 'Attendance failed. Try again.');
-      if (scannerRef.current) scannerRef.current.resume();
+      if (controlsRef.current) controlsRef.current.stop();
     } finally {
       setLoading(false);
     }
@@ -116,7 +110,6 @@ const Scan = () => {
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    // Page reload karo taaki camera fresh start ho
     window.location.reload(); 
   };
 
@@ -145,11 +138,12 @@ const Scan = () => {
       <main className="flex-1 p-4 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
-          {/* 🚀 Ye div sirf tab dikhega jab scan/error na ho, lekin DOM me hamesha rahega */}
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
-            {/* html5-qrcode is div ke andar apna video banayega, React iske andar kuch nahi karega */}
-            <div id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></div>
+            
+            {/* 👇 ZXing video yahan banayega */}
+            <video id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></video>
+            
             <div className="mt-6 text-center">
               <p className="text-slate-300 text-sm font-medium flex items-center justify-center gap-2">
                 <span className="relative flex h-3 w-3">
