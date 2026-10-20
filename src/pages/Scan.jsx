@@ -15,7 +15,6 @@ const Scan = () => {
   const token = localStorage.getItem('teacherToken');
   const schoolName = "Smart School";
 
-  // 👇 URL se Class nikaalo
   const queryParams = new URLSearchParams(location.search);
   const targetClass = queryParams.get('class'); 
 
@@ -39,24 +38,31 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass]);
 
-  const startScanner = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch(e => console.log("Clear error:", e));
-      scannerRef.current = null;
-    }
+  // 🚀 FIXED: Camera Start Function
+  useEffect(() => {
+    if (!token || !targetClass) return;
 
-    setTimeout(() => {
-      if (document.getElementById('reader').innerHTML !== '') {
-        document.getElementById('reader').innerHTML = '';
+    // 1 second ka delay taaki page load ho jaye aur DOM ready ho
+    const timer = setTimeout(() => {
+      // Agar pehle se koi scanner chal raha hai to usko band karo
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(e => console.log("Clear error:", e));
+        scannerRef.current = null;
       }
+
+      // Purana div clear karo
+      const readerDiv = document.getElementById('reader');
+      if (readerDiv) readerDiv.innerHTML = '';
 
       try {
         const scanner = new Html5QrcodeScanner('reader', {
           qrbox: { width: 250, height: 250 },
-          fps: 15,
+          fps: 10, // FPS thoda kam kiya taaki load kam pade
           aspectRatio: 1.0,
           showTorchButtonIfSupported: true,
-          videoConstraints: { facingMode: { exact: "environment" } }
+          videoConstraints: { 
+            facingMode: "environment" // 👈 'exact' hata diya taaki camera zaida options me khule
+          }
         });
 
         scannerRef.current = scanner;
@@ -66,19 +72,18 @@ const Scan = () => {
             scanner.pause(true);
             handleScanSuccess(decodedText);
           },
-          () => {} 
+          (err) => {
+             // Camera errors ko ignore karo
+          } 
         );
       } catch (err) {
         console.error("Scanner Start Error:", err);
+        setError("Camera start nahi ho raha. Page refresh karein.");
       }
-    }, 300);
-  };
-
-  useEffect(() => {
-    if (!token || !targetClass) return;
-    startScanner();
+    }, 500); // 500ms delay
 
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current) {
         scannerRef.current.clear().catch(e => console.log(e));
       }
@@ -92,7 +97,6 @@ const Scan = () => {
     setScanResult(null);
 
     try {
-      // 👇 Backend ko Class bhi bhejo
       const response = await axios.post(
         'https://smart-attendance-backend-one.vercel.app/api/attendance/scan',
         { qrCode: decodedText, targetClass: targetClass }, 
@@ -111,7 +115,8 @@ const Scan = () => {
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    startScanner(); 
+    // Page ko reload karo taaki camera fresh start ho
+    window.location.reload(); 
   };
 
   return (
