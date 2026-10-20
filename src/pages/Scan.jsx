@@ -38,54 +38,66 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass]);
 
-  // 🚀 Camera Start Function (React se alag container)
+  // 🚀 FIX: Pehle Permission maango, phir Scanner start karo
   useEffect(() => {
     if (!token || !targetClass) return;
 
-    const timer = setTimeout(() => {
-      // Purana scanner clear karo
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.log("Clear error:", e));
-        scannerRef.current = null;
-      }
-
-      // 'reader' div ko dhundo (ye div React ke control me nahi hai)
-      const readerDiv = document.getElementById('reader');
-      if (!readerDiv) return;
-
-      // Agar pehle se kuch hai to clear karo
-      readerDiv.innerHTML = '';
-
+    const initScanner = async () => {
       try {
-        const scanner = new Html5QrcodeScanner('reader', {
-          qrbox: { width: 250, height: 250 },
-          fps: 10,
-          aspectRatio: 1.0,
-          showTorchButtonIfSupported: true,
-          videoConstraints: { 
-            facingMode: "environment" // Back camera
+        // 1. Sabse pehle manually camera permission maango
+        // Isse Android ka "Allow Camera" wala popup aayega
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        
+        // Permission mil gayi, stream ko band karo (hum isko use nahi karenge, sirf permission ke liye tha)
+        stream.getTracks().forEach(track => track.stop());
+
+        // 2. Ab Scanner start karo
+        setTimeout(() => {
+          if (scannerRef.current) {
+            scannerRef.current.clear().catch(e => console.log("Clear error:", e));
+            scannerRef.current = null;
           }
-        });
 
-        scannerRef.current = scanner;
+          const readerDiv = document.getElementById('reader');
+          if (readerDiv) readerDiv.innerHTML = '';
 
-        scanner.render(
-          async (decodedText) => {
-            scanner.pause(true);
-            handleScanSuccess(decodedText);
-          },
-          (err) => {
-            // Errors ignore karo
-          } 
-        );
+          try {
+            const scanner = new Html5QrcodeScanner('reader', {
+              qrbox: { width: 250, height: 250 },
+              fps: 10,
+              aspectRatio: 1.0,
+              showTorchButtonIfSupported: true,
+              videoConstraints: { 
+                facingMode: "environment" 
+              }
+            });
+
+            scannerRef.current = scanner;
+
+            scanner.render(
+              async (decodedText) => {
+                scanner.pause(true);
+                handleScanSuccess(decodedText);
+              },
+              (err) => {
+                // Errors ignore karo
+              } 
+            );
+          } catch (err) {
+            console.error("Scanner Start Error:", err);
+            setError("Camera start nahi ho raha. Page refresh karein.");
+          }
+        }, 500);
+
       } catch (err) {
-        console.error("Scanner Start Error:", err);
-        setError("Camera start nahi ho raha. Page refresh karein.");
+        console.error("Permission Error:", err);
+        setError("Camera permission denied. Settings me jaakar Camera allow karein.");
       }
-    }, 500); // 500ms delay taaki DOM ready ho
+    };
+
+    initScanner();
 
     return () => {
-      clearTimeout(timer);
       if (scannerRef.current) {
         scannerRef.current.clear().catch(e => console.log(e));
       }
@@ -145,10 +157,8 @@ const Scan = () => {
       <main className="flex-1 p-4 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
-          {/* 🚀 Ye div hamesha mounted rahega, sirf hide hoga */}
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
-            {/* html5-qrcode is div ke andar apna video banayega, React iske andar kuch nahi karega */}
             <div id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></div>
             <div className="mt-6 text-center">
               <p className="text-slate-300 text-sm font-medium flex items-center justify-center gap-2">
