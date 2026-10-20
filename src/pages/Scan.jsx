@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'; // 👈 useRef add kiya
+import { useEffect, useState, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +11,6 @@ const Scan = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // 👇 Refs define kiye
   const codeReaderRef = useRef(null);
   const controlsRef = useRef(null);
   
@@ -41,7 +40,7 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass]);
 
-  // 🚀 ZXing Library se Camera Start karo
+  // 🚀 Camera Start Function
   useEffect(() => {
     if (!token || !targetClass) return;
 
@@ -50,18 +49,16 @@ const Scan = () => {
         const codeReader = new BrowserMultiFormatReader();
         codeReaderRef.current = codeReader;
 
-        // Camera start karo (Back camera ke liye 'environment')
         codeReader.decodeFromVideoDevice(
-          undefined, // Default camera (ya environment)
-          'reader',  // Jahan video dikhegi
+          undefined, 
+          'reader',  
           (result, err) => {
             if (result) {
-              // QR Scan ho gaya
               if (controlsRef.current) controlsRef.current.stop();
               handleScanSuccess(result.getText());
             }
             if (err && !(err instanceof Error)) {
-              // Ignore normal errors
+              // Ignore
             }
           }
         ).then((controls) => {
@@ -107,10 +104,12 @@ const Scan = () => {
     }
   };
 
+  // 🚀 FIXED: Reload ki jagah navigate use karo
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    window.location.reload(); 
+    // Ye line page ko refresh nahi karegi, balke wapas usi page par le aayegi
+    navigate(`/scan?class=${targetClass}`, { replace: true });
   };
 
   return (
@@ -141,7 +140,6 @@ const Scan = () => {
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
             
-            {/* 👇 ZXing video yahan banayega */}
             <video id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></video>
             
             <div className="mt-6 text-center">
