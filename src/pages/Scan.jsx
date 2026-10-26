@@ -31,8 +31,8 @@ const Scan = () => {
     const fetchCount = async () => {
       try {
         const url = role === 'admin' 
-          ? 'https://gcit-collage-backend.vercel.app/api/teacher-attendance/today' 
-          : 'https://gcit-collage-backend.vercel.app/api/attendance/today';
+          ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/today' 
+          : 'https://smart-attendance-backend-one.vercel.app/api/attendance/today';
         
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
@@ -99,10 +99,9 @@ const Scan = () => {
     setScanResult(null);
 
     try {
-      // 👇 Role ke hisaab se API call karo
       const url = role === 'admin'
-        ? 'https://gcit-collage-backend.vercel.app/api/teacher-attendance/scan'
-        : 'https://gcit-collage-backend.vercel.app/api/attendance/scan';
+        ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/scan'
+        : 'https://smart-attendance-backend-one.vercel.app/api/attendance/scan';
       
       const body = role === 'admin'
         ? { qrCode: decodedText }

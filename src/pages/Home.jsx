@@ -10,7 +10,7 @@ const Home = () => {
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
-  const schoolName = "Smart School";
+  const schoolName = teacherData.schoolName || 'Smart School'; // ✅ Dynamic
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   useEffect(() => {
@@ -56,10 +56,10 @@ const Home = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-900/50">
-              {schoolName.charAt(0)}
+              {schoolName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-wide">{schoolName}</h1>
+              <h1 className="text-xl font-bold text-white tracking-wide truncate max-w-[180px]" title={schoolName}>{schoolName}</h1>
               <p className="text-sm text-blue-400 font-medium">Teacher Dashboard</p>
             </div>
           </div>

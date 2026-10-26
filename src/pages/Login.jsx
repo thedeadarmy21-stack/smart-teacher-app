@@ -15,8 +15,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Yahan apna naya GCIT Collage backend URL daalo
-      const response = await axios.post('https://gcit-collage-backend.vercel.app/api/auth/login', {
+      const response = await axios.post('https://smart-attendance-backend-one.vercel.app/api/auth/login', {
         username,
         password,
       });
@@ -28,10 +27,8 @@ const Login = () => {
 
       // 👇 Role ke hisaab se redirect karo
       if (teacher.role === 'admin') {
-        // Admin ko Teachers Attendance wale page par bhejo
         navigate('/admin-attendance');
       } else {
-        // Teacher ko Home (Students) wale page par bhejo
         navigate('/home');
       }
     } catch (err) {
@@ -49,7 +46,7 @@ const Login = () => {
           <h2 className="text-2xl font-bold text-white">Smart School</h2>
           <p className="text-slate-400 text-sm mt-1">Teacher / Admin Login</p>
         </div>
-        
+
         {error && <div className="bg-red-900/50 text-red-400 p-3 rounded-xl mb-6 text-sm font-semibold text-center border border-red-800">{error}</div>}
 
         <form onSubmit={handleLogin} className="space-y-5">
