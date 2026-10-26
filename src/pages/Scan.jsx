@@ -15,57 +15,56 @@ const Scan = () => {
   const controlsRef = useRef(null);
   
   const token = localStorage.getItem('teacherToken');
-  const schoolName = "Smart School";
+  const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
+  const role = teacherData.role || 'teacher';
 
   const queryParams = new URLSearchParams(location.search);
   const targetClass = queryParams.get('class'); 
 
   useEffect(() => {
     if (!token) navigate('/');
-    if (!targetClass) {
+    if (!targetClass && role !== 'admin') {
       alert("No class selected. Redirecting to home.");
       navigate('/home');
     }
     
     const fetchCount = async () => {
       try {
-        const res = await axios.get('https://smart-attendance-backend-one.vercel.app/api/attendance/today', {
+        const url = role === 'admin' 
+          ? 'https://gcit-collage-backend.vercel.app/api/teacher-attendance/today' 
+          : 'https://gcit-collage-backend.vercel.app/api/attendance/today';
+        
+        const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setTodayCount(res.data.count);
+        setTodayCount(res.data.count || 0);
       } catch (err) {
         console.log('Count error');
       }
     };
     fetchCount();
-  }, [token, navigate, targetClass]);
+  }, [token, navigate, targetClass, role]);
 
-  // 🚀 CAMERA START KARNE KA FUNCTION
   const startCamera = () => {
-    // Agar purana camera chal raha hai to band karo
     if (controlsRef.current) {
       controlsRef.current.stop();
       controlsRef.current = null;
     }
 
-    // Thoda delay taaki DOM ready ho jaye
     setTimeout(() => {
       try {
         const codeReader = new BrowserMultiFormatReader();
         codeReaderRef.current = codeReader;
 
         codeReader.decodeFromVideoDevice(
-          undefined, // Default camera
-          'reader',  // Jahan video dikhegi
+          undefined,
+          'reader',
           (result, err) => {
             if (result) {
-              // QR Scan ho gaya
               if (controlsRef.current) controlsRef.current.stop();
               handleScanSuccess(result.getText());
             }
-            if (err && !(err instanceof Error)) {
-              // Ignore normal errors
-            }
+            if (err && !(err instanceof Error)) {}
           }
         ).then((controls) => {
           controlsRef.current = controls;
@@ -78,21 +77,20 @@ const Scan = () => {
         console.error("Scanner Init Error:", err);
         setError("Camera start nahi ho raha.");
       }
-    }, 500); // 500ms delay
+    }, 500);
   };
 
-  // Page load hote hi camera start karo
   useEffect(() => {
-    if (!token || !targetClass) return;
+    if (!token) return;
+    if (role !== 'admin' && !targetClass) return;
     startCamera();
 
-    // Cleanup
     return () => {
       if (controlsRef.current) {
         controlsRef.current.stop();
       }
     };
-  }, [token, targetClass]);
+  }, [token, targetClass, role]);
 
   const handleScanSuccess = async (decodedText) => {
     if (loading) return;
@@ -101,12 +99,25 @@ const Scan = () => {
     setScanResult(null);
 
     try {
-      const response = await axios.post(
-        'https://smart-attendance-backend-one.vercel.app/api/attendance/scan',
-        { qrCode: decodedText, targetClass: targetClass }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setScanResult(response.data);
+      // 👇 Role ke hisaab se API call karo
+      const url = role === 'admin'
+        ? 'https://gcit-collage-backend.vercel.app/api/teacher-attendance/scan'
+        : 'https://gcit-collage-backend.vercel.app/api/attendance/scan';
+      
+      const body = role === 'admin'
+        ? { qrCode: decodedText }
+        : { qrCode: decodedText, targetClass: targetClass };
+
+      const response = await axios.post(url, body, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setScanResult({
+        name: response.data.teacherName || response.data.studentName,
+        rollNumber: response.data.rollNumber || 'N/A',
+        timeIn: response.data.timeIn,
+        type: role === 'admin' ? 'Teacher' : 'Student'
+      });
       setTodayCount(prev => prev + 1);
     } catch (err) {
       setError(err.response?.data?.message || 'Attendance failed. Try again.');
@@ -116,14 +127,15 @@ const Scan = () => {
     }
   };
 
-  // 🚀 NAYA FIX: Next Student par camera dobara start karo
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    // 1. Pehle camera start karne wala function call karo
     startCamera();
-    // 2. Phir URL update karo taaki page fresh lage
-    navigate(`/scan?class=${targetClass}`, { replace: true });
+    if (role === 'admin') {
+      navigate('/scan', { replace: true });
+    } else {
+      navigate(`/scan?class=${targetClass}`, { replace: true });
+    }
   };
 
   return (
@@ -131,11 +143,15 @@ const Scan = () => {
       <header className="bg-slate-800/80 backdrop-blur-md text-white p-4 shadow-lg rounded-b-3xl flex justify-between items-center sticky top-0 z-20 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30">
-            {schoolName.charAt(0)}
+            {role === 'admin' ? 'A' : 'T'}
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-wide">{schoolName}</h1>
-            <p className="text-xs text-blue-400 font-bold">Scanning Class {targetClass}</p>
+            <h1 className="text-lg font-bold tracking-wide">
+              {role === 'admin' ? 'Teacher Attendance' : 'Smart School'}
+            </h1>
+            <p className="text-xs text-blue-400 font-bold">
+              {role === 'admin' ? 'Scanning Teachers' : `Scanning Class ${targetClass}`}
+            </p>
           </div>
         </div>
         
@@ -154,7 +170,6 @@ const Scan = () => {
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
             
-            {/* 👇 ZXing video yahan banayega */}
             <video id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></video>
             
             <div className="mt-6 text-center">
@@ -196,18 +211,22 @@ const Scan = () => {
               <p className="text-slate-400 text-sm mb-6">Saved to database successfully.</p>
               
               <div className="bg-slate-900 p-5 rounded-2xl border border-slate-700 mb-8 shadow-inner">
-                <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Student Name</p>
-                <p className="text-white text-xl font-bold">{scanResult.studentName}</p>
-                <div className="h-px bg-slate-800 my-3"></div>
-                <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Roll Number</p>
-                <p className="text-slate-200 text-lg font-semibold">{scanResult.rollNumber}</p>
+                <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">{scanResult.type} Name</p>
+                <p className="text-white text-xl font-bold">{scanResult.name}</p>
+                {scanResult.rollNumber !== 'N/A' && (
+                  <>
+                    <div className="h-px bg-slate-800 my-3"></div>
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Roll Number</p>
+                    <p className="text-slate-200 text-lg font-semibold">{scanResult.rollNumber}</p>
+                  </>
+                )}
                 <div className="h-px bg-slate-800 my-3"></div>
                 <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Time In</p>
                 <p className="text-blue-400 text-lg font-bold">{scanResult.timeIn}</p>
               </div>
               
               <button onClick={resetScanner} className="bg-blue-600 text-white px-6 py-4 rounded-xl font-bold w-full shadow-lg shadow-blue-900/50 hover:bg-blue-500 transition text-lg flex items-center justify-center gap-2">
-                <span>📷</span> Scan Next Student
+                <span>📷</span> Scan Next
               </button>
             </div>
           )}
@@ -215,7 +234,7 @@ const Scan = () => {
       </main>
 
       <nav className="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around p-3 pb-safe z-20">
-        <button onClick={() => navigate('/home')} className="flex flex-col items-center text-slate-500 hover:text-blue-500 transition-colors">
+        <button onClick={() => navigate(role === 'admin' ? '/admin-attendance' : '/home')} className="flex flex-col items-center text-slate-500 hover:text-blue-500 transition-colors">
           <span className="text-2xl mb-1">🏠</span>
           <span className="text-[10px] font-bold tracking-wider">HOME</span>
         </button>

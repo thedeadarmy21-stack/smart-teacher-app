@@ -6,7 +6,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [todayCount, setTodayCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState(''); // 👈 Naya State
+  const [selectedClass, setSelectedClass] = useState('');
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
@@ -15,6 +15,13 @@ const Home = () => {
 
   useEffect(() => {
     if (!token) navigate('/');
+    
+    // Agar admin hai to Teachers Attendance wale page par bhejo
+    if (teacherData.role === 'admin') {
+      navigate('/admin-attendance');
+      return;
+    }
+
     const fetchTodayAttendance = async () => {
       try {
         const res = await axios.get('https://smart-attendance-backend-one.vercel.app/api/attendance/today', {
@@ -28,14 +35,13 @@ const Home = () => {
       }
     };
     fetchTodayAttendance();
-  }, [token, navigate]);
+  }, [token, navigate, teacherData.role]);
 
   const handleLogout = () => {
     localStorage.clear();
     navigate('/');
   };
 
-  // 🚀 NAYA: Class select karke scan page par jao
   const handleStartScan = () => {
     if (!selectedClass) {
       alert("Please select a class first!");
@@ -64,7 +70,7 @@ const Home = () => {
         
         <div>
           <p className="text-slate-400 text-sm">Welcome back,</p>
-          <h2 className="text-2xl font-bold text-white">{teacherData.name === 'Sir Bilal' ? 'Sir Sarkar' : (teacherData.name || 'Sir Sarkar')}</h2>
+          <h2 className="text-2xl font-bold text-white">{teacherData.name || 'Teacher'}</h2>
         </div>
       </header>
 
@@ -87,7 +93,6 @@ const Home = () => {
           <h3 className="text-white font-bold text-xl mb-2">Scan Student ID</h3>
           <p className="text-slate-400 text-sm mb-6">Select the class you are scanning for today.</p>
           
-          {/* 🚀 NAYA: Class Selector */}
           <div className="mb-6">
             <select 
               value={selectedClass} 

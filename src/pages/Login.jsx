@@ -15,21 +15,25 @@ const Login = () => {
     setLoading(true);
 
     try {
-      let deviceId = localStorage.getItem('deviceId');
-      if (!deviceId) {
-        deviceId = "DEV-" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-        localStorage.setItem('deviceId', deviceId);
-      }
-
-      const response = await axios.post('https://smart-attendance-backend-one.vercel.app/api/auth/login', {
+      // Yahan apna naya GCIT Collage backend URL daalo
+      const response = await axios.post('https://gcit-collage-backend.vercel.app/api/auth/login', {
         username,
         password,
-        deviceId,
       });
 
-      localStorage.setItem('teacherToken', response.data.token);
-      localStorage.setItem('teacherData', JSON.stringify(response.data.teacher));
-      navigate('/home');
+      const { token, teacher } = response.data;
+
+      localStorage.setItem('teacherToken', token);
+      localStorage.setItem('teacherData', JSON.stringify(teacher));
+
+      // 👇 Role ke hisaab se redirect karo
+      if (teacher.role === 'admin') {
+        // Admin ko Teachers Attendance wale page par bhejo
+        navigate('/admin-attendance');
+      } else {
+        // Teacher ko Home (Students) wale page par bhejo
+        navigate('/home');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Server check karo.');
     } finally {
@@ -42,8 +46,8 @@ const Login = () => {
       <div className="bg-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎓</div>
-          <h2 className="text-2xl font-bold text-white">Sir Sarkar Login</h2>
-          <p className="text-slate-400 text-sm mt-1">Smart Attendance App</p>
+          <h2 className="text-2xl font-bold text-white">Smart School</h2>
+          <p className="text-slate-400 text-sm mt-1">Teacher / Admin Login</p>
         </div>
         
         {error && <div className="bg-red-900/50 text-red-400 p-3 rounded-xl mb-6 text-sm font-semibold text-center border border-red-800">{error}</div>}
@@ -56,7 +60,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              placeholder="Enter username" // 👈 Placeholder change kiya
+              placeholder="Enter username"
               required
             />
           </div>
@@ -68,7 +72,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              placeholder="Enter password" // 👈 Placeholder change kiya
+              placeholder="Enter password"
               required
             />
           </div>
