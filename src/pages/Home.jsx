@@ -19,10 +19,14 @@ const Home = () => {
       return;
     }
     
-    // Agar admin hai to admin page pe bhejo
     if (teacherData.role === 'admin') {
       navigate('/admin-attendance');
       return;
+    }
+
+    // 🚀 Auto Class Select (Agar teacher ki class assigned hai)
+    if (teacherData.assignedClass) {
+      setSelectedClass(teacherData.assignedClass);
     }
 
     const fetchTodayAttendance = async () => {
@@ -38,7 +42,7 @@ const Home = () => {
       }
     };
     fetchTodayAttendance();
-  }, [token, navigate, teacherData.role]);
+  }, [token, navigate, teacherData.role, teacherData.assignedClass]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -94,13 +98,20 @@ const Home = () => {
              <span className="text-4xl text-blue-400">📷</span>
           </div>
           <h3 className="text-white font-bold text-xl mb-2">Scan Student ID</h3>
-          <p className="text-slate-400 text-sm mb-6">Select the class you are scanning for today.</p>
+          <p className="text-slate-400 text-sm mb-6">
+            {teacherData.assignedClass 
+              ? `You are assigned to Class ${teacherData.assignedClass}.` 
+              : 'Select the class you are scanning for today.'}
+          </p>
           
           <div className="mb-6">
             <select 
               value={selectedClass} 
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-center appearance-none"
+              disabled={!!teacherData.assignedClass} // 🚀 Agar class assigned hai to lock
+              className={`w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-center appearance-none ${
+                teacherData.assignedClass ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
               <option value="">-- Select Class --</option>
               <option value="1">Class 1</option>
@@ -114,6 +125,9 @@ const Home = () => {
               <option value="9">Class 9</option>
               <option value="10">Class 10</option>
             </select>
+            {teacherData.assignedClass && (
+              <p className="text-xs text-slate-500 mt-2">🔒 Class locked by Admin</p>
+            )}
           </div>
 
           <button 
