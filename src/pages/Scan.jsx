@@ -53,11 +53,21 @@ const Scan = () => {
 
     setTimeout(() => {
       try {
+        // 🚀 YAHAN HAI ASAL FIX (TRY_HARDER & Resolution)
         const codeReader = new BrowserMultiFormatReader();
         codeReaderRef.current = codeReader;
 
-        codeReader.decodeFromVideoDevice(
-          undefined,
+        // Camera constraints for better resolution
+        const constraints = {
+          video: {
+            facingMode: 'environment', // Back camera use karein
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        codeReader.decodeFromConstraints(
+          constraints,
           'reader',
           (result, err) => {
             if (result) {
