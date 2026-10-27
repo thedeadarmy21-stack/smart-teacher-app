@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode'; // 🚀 Library change ki
+import { Html5Qrcode } from 'html5-qrcode';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -20,7 +20,7 @@ const Scan = () => {
   const queryParams = new URLSearchParams(location.search);
   const targetClass = queryParams.get('class'); 
 
-  // 🚀 Count fetch karne ka logic (Same as before)
+  // 🚀 Count fetch karne ka logic
   useEffect(() => {
     if (!token) navigate('/');
     if (!targetClass && role !== 'admin') {
@@ -45,27 +45,37 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass, role]);
 
-  // 🚀 html5-qrcode Scanner Start
+  // 🚀 Scanner Start Function
   const startScanner = async () => {
     try {
+      // Agar pehle se koi scanner chal raha hai to use band karein
+      if (scannerRef.current) {
+        try {
+          await scannerRef.current.stop();
+          scannerRef.current.clear();
+        } catch (e) {}
+      }
+
       const scanner = new Html5Qrcode("reader");
       scannerRef.current = scanner;
 
       await scanner.start(
-        { facingMode: "environment" }, // Back camera
+        { facingMode: "environment" }, 
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 }, // Scan area
+          qrbox: { width: 250, height: 250 }, 
         },
         (decodedText) => {
           // QR scan ho gaya
-          scanner.stop().then(() => {
-            scanner.clear();
-            handleScanSuccess(decodedText);
-          }).catch((err) => console.error("Stop error:", err));
+          if (scannerRef.current) {
+             scannerRef.current.stop().then(() => {
+               scannerRef.current.clear();
+               handleScanSuccess(decodedText);
+             }).catch((err) => console.error("Stop error:", err));
+          }
         },
         (errorMessage) => {
-          // Ye error har frame par aata hai jab QR na mile, ignore karein
+          // Ignore frame errors
         }
       ).catch((err) => {
         console.error("Camera Start Error:", err);
@@ -78,7 +88,7 @@ const Scan = () => {
     }
   };
 
-  // 🚀 Scan Success Handler (Same as before)
+  // 🚀 Scan Success Handler
   const handleScanSuccess = async (decodedText) => {
     if (loading) return;
     setLoading(true);
@@ -112,12 +122,16 @@ const Scan = () => {
     }
   };
 
-  // 🚀 Scanner Reset
+  // 🚀 Scanner Reset (No Page Reload)
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    // Component reload karein taake scanner dobara start ho
-    window.location.reload();
+    setLoading(false);
+    
+    // Thoda delay dein taake React DOM update kar le, phir scanner start karein
+    setTimeout(() => {
+      startScanner();
+    }, 300);
   };
 
   // Component mount hone par scanner start karein
@@ -125,7 +139,6 @@ const Scan = () => {
     if (!token) return;
     if (role !== 'admin' && !targetClass) return;
     
-    // Thoda delay taake DOM load ho jaye
     const timer = setTimeout(() => {
       startScanner();
     }, 500);
@@ -133,7 +146,9 @@ const Scan = () => {
     return () => {
       clearTimeout(timer);
       if (scannerRef.current) {
-        scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(() => {});
+        try {
+          scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(() => {});
+        } catch(e) {}
       }
     };
   }, [token, targetClass, role]);
@@ -167,7 +182,6 @@ const Scan = () => {
       <main className="flex-1 p-4 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
-          {/* 🚀 html5-qrcode ke liye div */}
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
             
