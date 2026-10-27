@@ -10,13 +10,16 @@ const Home = () => {
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
-  const schoolName = teacherData.schoolName || 'Smart School'; // ✅ Dynamic
+  const schoolName = teacherData.schoolName || 'Smart School';
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   useEffect(() => {
-    if (!token) navigate('/');
+    if (!token) {
+      navigate('/');
+      return;
+    }
     
-    // Agar admin hai to Teachers Attendance wale page par bhejo
+    // Agar admin hai to admin page pe bhejo
     if (teacherData.role === 'admin') {
       navigate('/admin-attendance');
       return;

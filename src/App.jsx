@@ -3,10 +3,23 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Scan from './pages/Scan';
 
-// ✅ NAYA: Protected Route — token check karta hai
-const ProtectedRoute = ({ children }) => {
+// ✅ Admin Only Protected Route
+const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('teacherToken');
+  const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
+  
   if (!token) return <Navigate to="/" replace />;
+  if (teacherData.role !== 'admin') return <Navigate to="/home" replace />;
+  return children;
+};
+
+// ✅ Teacher Only Protected Route
+const TeacherRoute = ({ children }) => {
+  const token = localStorage.getItem('teacherToken');
+  const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
+  
+  if (!token) return <Navigate to="/" replace />;
+  if (teacherData.role === 'admin') return <Navigate to="/admin-attendance" replace />;
   return children;
 };
 
@@ -16,36 +29,15 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         
-        {/* ✅ Protected Routes */}
-        <Route 
-          path="/home" 
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/scan" 
-          element={
-            <ProtectedRoute>
-              <Scan />
-            </ProtectedRoute>
-          } 
-        />
+        {/* Teacher Routes */}
+        <Route path="/home" element={<TeacherRoute><Home /></TeacherRoute>} />
+        <Route path="/scan" element={<TeacherRoute><Scan /></TeacherRoute>} />
         
-        {/* ✅ NAYA: Admin Attendance Route (jo missing tha) */}
-        <Route 
-          path="/admin-attendance" 
-          element={
-            <ProtectedRoute>
-              <Scan />
-            </ProtectedRoute>
-          } 
-        />
+        {/* Admin Route (Sirf Admin ke liye) */}
+        <Route path="/admin-attendance" element={<AdminRoute><Scan /></AdminRoute>} />
         
-        {/* Galat URL pe redirect */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        {/* Default Redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

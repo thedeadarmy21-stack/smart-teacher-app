@@ -5,6 +5,7 @@ import axios from 'axios';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginType, setLoginType] = useState('teacher'); // 👈 'teacher' or 'admin'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -22,17 +23,24 @@ const Login = () => {
 
       const { token, teacher } = response.data;
 
+      // 🚀 Check karo ke role login type se match karta hai ya nahi
+      if (loginType === 'admin' && teacher.role !== 'admin') {
+        throw new Error('Access denied. Only admin can login here.');
+      }
+      if (loginType === 'teacher' && teacher.role === 'admin') {
+        throw new Error('This is a teacher portal. Admin should use Admin Panel.');
+      }
+
       localStorage.setItem('teacherToken', token);
       localStorage.setItem('teacherData', JSON.stringify(teacher));
 
-      // 👇 Role ke hisaab se redirect karo
       if (teacher.role === 'admin') {
         navigate('/admin-attendance');
       } else {
         navigate('/home');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Server check karo.');
+      setError(err.response?.data?.message || err.message || 'Login failed.');
     } finally {
       setLoading(false);
     }
@@ -44,7 +52,27 @@ const Login = () => {
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎓</div>
           <h2 className="text-2xl font-bold text-white">Smart School</h2>
-          <p className="text-slate-400 text-sm mt-1">Teacher / Admin Login</p>
+          <p className="text-slate-400 text-sm mt-1">Teacher / Admin Portal</p>
+        </div>
+
+        {/* 🚀 Toggle Button */}
+        <div className="flex bg-slate-900 p-1 rounded-xl mb-6 border border-slate-700">
+          <button
+            onClick={() => setLoginType('teacher')}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+              loginType === 'teacher' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            👨‍🏫 Teacher
+          </button>
+          <button
+            onClick={() => setLoginType('admin')}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+              loginType === 'admin' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            👑 Admin
+          </button>
         </div>
 
         {error && <div className="bg-red-900/50 text-red-400 p-3 rounded-xl mb-6 text-sm font-semibold text-center border border-red-800">{error}</div>}
@@ -77,9 +105,11 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition duration-200 shadow-lg shadow-blue-900/50 mt-4"
+            className={`w-full text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg mt-4 ${
+              loginType === 'admin' ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-900/50' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/50'
+            }`}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in...' : `Login as ${loginType === 'admin' ? 'Admin' : 'Teacher'}`}
           </button>
         </form>
       </div>
