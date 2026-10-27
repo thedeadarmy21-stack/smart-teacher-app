@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+import { Html5Qrcode } from 'html5-qrcode'; // 🚀 Library change ki
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -11,8 +11,7 @@ const Scan = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const codeReaderRef = useRef(null);
-  const controlsRef = useRef(null);
+  const scannerRef = useRef(null);
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
@@ -21,6 +20,7 @@ const Scan = () => {
   const queryParams = new URLSearchParams(location.search);
   const targetClass = queryParams.get('class'); 
 
+  // 🚀 Count fetch karne ka logic (Same as before)
   useEffect(() => {
     if (!token) navigate('/');
     if (!targetClass && role !== 'admin') {
@@ -45,63 +45,40 @@ const Scan = () => {
     fetchCount();
   }, [token, navigate, targetClass, role]);
 
-  const startCamera = () => {
-    if (controlsRef.current) {
-      controlsRef.current.stop();
-      controlsRef.current = null;
+  // 🚀 html5-qrcode Scanner Start
+  const startScanner = async () => {
+    try {
+      const scanner = new Html5Qrcode("reader");
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" }, // Back camera
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }, // Scan area
+        },
+        (decodedText) => {
+          // QR scan ho gaya
+          scanner.stop().then(() => {
+            scanner.clear();
+            handleScanSuccess(decodedText);
+          }).catch((err) => console.error("Stop error:", err));
+        },
+        (errorMessage) => {
+          // Ye error har frame par aata hai jab QR na mile, ignore karein
+        }
+      ).catch((err) => {
+        console.error("Camera Start Error:", err);
+        setError("Camera start nahi ho raha. Permission check karein.");
+      });
+
+    } catch (err) {
+      console.error("Scanner Init Error:", err);
+      setError("Scanner initialize nahi ho raha.");
     }
-
-    setTimeout(() => {
-      try {
-        // 🚀 YAHAN HAI ASAL FIX (TRY_HARDER & Resolution)
-        const codeReader = new BrowserMultiFormatReader();
-        codeReaderRef.current = codeReader;
-
-        // Camera constraints for better resolution
-        const constraints = {
-          video: {
-            facingMode: 'environment', // Back camera use karein
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        };
-
-        codeReader.decodeFromConstraints(
-          constraints,
-          'reader',
-          (result, err) => {
-            if (result) {
-              if (controlsRef.current) controlsRef.current.stop();
-              handleScanSuccess(result.getText());
-            }
-            if (err && !(err instanceof Error)) {}
-          }
-        ).then((controls) => {
-          controlsRef.current = controls;
-        }).catch((err) => {
-          console.error("Camera Start Error:", err);
-          setError("Camera start nahi ho raha. Page refresh karein.");
-        });
-
-      } catch (err) {
-        console.error("Scanner Init Error:", err);
-        setError("Camera start nahi ho raha.");
-      }
-    }, 500);
   };
 
-  useEffect(() => {
-    if (!token) return;
-    if (role !== 'admin' && !targetClass) return;
-    startCamera();
-
-    return () => {
-      if (controlsRef.current) {
-        controlsRef.current.stop();
-      }
-    };
-  }, [token, targetClass, role]);
-
+  // 🚀 Scan Success Handler (Same as before)
   const handleScanSuccess = async (decodedText) => {
     if (loading) return;
     setLoading(true);
@@ -130,22 +107,36 @@ const Scan = () => {
       setTodayCount(prev => prev + 1);
     } catch (err) {
       setError(err.response?.data?.message || 'Attendance failed. Try again.');
-      if (controlsRef.current) controlsRef.current.stop();
     } finally {
       setLoading(false);
     }
   };
 
+  // 🚀 Scanner Reset
   const resetScanner = () => {
     setScanResult(null);
     setError('');
-    startCamera();
-    if (role === 'admin') {
-      navigate('/scan', { replace: true });
-    } else {
-      navigate(`/scan?class=${targetClass}`, { replace: true });
-    }
+    // Component reload karein taake scanner dobara start ho
+    window.location.reload();
   };
+
+  // Component mount hone par scanner start karein
+  useEffect(() => {
+    if (!token) return;
+    if (role !== 'admin' && !targetClass) return;
+    
+    // Thoda delay taake DOM load ho jaye
+    const timer = setTimeout(() => {
+      startScanner();
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      if (scannerRef.current) {
+        scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(() => {});
+      }
+    };
+  }, [token, targetClass, role]);
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col pb-20">
@@ -176,10 +167,11 @@ const Scan = () => {
       <main className="flex-1 p-4 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700 relative">
           
+          {/* 🚀 html5-qrcode ke liye div */}
           <div className={`p-4 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
             <div className="absolute top-6 left-6 right-6 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
             
-            <video id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700"></video>
+            <div id="reader" className="w-full rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-700 min-h-[250px]"></div>
             
             <div className="mt-6 text-center">
               <p className="text-slate-300 text-sm font-medium flex items-center justify-center gap-2">
