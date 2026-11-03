@@ -10,7 +10,8 @@ const Home = () => {
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
-  const schoolName = teacherData.schoolName || 'Smart School';
+  // 🚀 Naya School Name
+  const schoolName = 'THE PACIFIC CAMBRIDGE SCHOOL'; 
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   useEffect(() => {
@@ -62,12 +63,13 @@ const Home = () => {
       <header className="bg-slate-800 p-6 rounded-b-3xl shadow-lg border-b border-slate-700">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-900/50">
-              {schoolName.charAt(0).toUpperCase()}
+            {/* 🚀 Naya Logo */}
+            <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-blue-900/50 p-1 overflow-hidden">
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-wide truncate max-w-[180px]" title={schoolName}>{schoolName}</h1>
-              <p className="text-sm text-blue-400 font-medium">Teacher Dashboard</p>
+              <h1 className="text-sm font-bold text-white tracking-wide truncate max-w-[180px] leading-tight" title={schoolName}>THE PACIFIC CAMBRIDGE SCHOOL</h1>
+              <p className="text-xs text-blue-400 font-medium mt-0.5">Teacher Dashboard</p>
             </div>
           </div>
           <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 p-2" title="Logout">
@@ -108,7 +110,7 @@ const Home = () => {
             <select 
               value={selectedClass} 
               onChange={(e) => setSelectedClass(e.target.value)}
-              disabled={!!teacherData.assignedClass} // 🚀 Agar class assigned hai to lock
+              disabled={!!teacherData.assignedClass}
               className={`w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-center appearance-none ${
                 teacherData.assignedClass ? 'opacity-70 cursor-not-allowed' : ''
               }`}
