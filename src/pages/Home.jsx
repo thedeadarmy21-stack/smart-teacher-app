@@ -7,6 +7,7 @@ const Home = () => {
   const [todayCount, setTodayCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState('');
+  const [classes, setClasses] = useState([]); // 🚀 Dynamic Classes State
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
@@ -24,9 +25,23 @@ const Home = () => {
       return;
     }
 
+    // 🚀 Auto Class Select
     if (teacherData.assignedClass) {
       setSelectedClass(teacherData.assignedClass);
     }
+
+    // 🚀 Fetch Dynamic Classes
+    const fetchClasses = async () => {
+      try {
+        const res = await axios.get('https://smart-attendance-backend-one.vercel.app/api/auth/classes', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setClasses(res.data.classes);
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+      }
+    };
+    fetchClasses();
 
     const fetchTodayAttendance = async () => {
       try {
@@ -112,19 +127,12 @@ const Home = () => {
             }`}
           >
             <option value="">-- Select Class --</option>
-            <option value="1">Class 1</option>
-            <option value="2">Class 2</option>
-            <option value="3">Class 3</option>
-            <option value="4">Class 4</option>
-            <option value="5">Class 5</option>
-            <option value="6">Class 6</option>
-            <option value="7">Class 7</option>
-            <option value="8">Class 8</option>
-            <option value="9">Class 9</option>
-            <option value="10">Class 10</option>
+            {classes.map((cls, idx) => (
+              <option key={idx} value={cls}>{cls}</option>
+            ))}
           </select>
           {teacherData.assignedClass && (
-            <p className="text-xs text-slate-500 mt-2">🔒 Class locked by Admin</p>
+            <p className="text-xs text-slate-400 mt-2">🔒 Class locked by Admin</p>
           )}
         </div>
 
