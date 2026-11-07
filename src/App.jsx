@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Scan from './pages/Scan';
+import ManualAttendance from './pages/ManualAttendance'; // 🚀 Naya Page
 
 // ✅ Admin Only Protected Route
 const AdminRoute = ({ children }) => {
@@ -33,7 +34,10 @@ function App() {
         <Route path="/home" element={<TeacherRoute><Home /></TeacherRoute>} />
         <Route path="/scan" element={<TeacherRoute><Scan /></TeacherRoute>} />
         
-        {/* Admin Route (Sirf Admin ke liye) */}
+        {/* 🚀 Manual Attendance Route */}
+        <Route path="/manual-attendance" element={<TeacherRoute><ManualAttendance /></TeacherRoute>} />
+        
+        {/* Admin Route */}
         <Route path="/admin-attendance" element={<AdminRoute><Scan /></AdminRoute>} />
         
         {/* Default Redirect */}

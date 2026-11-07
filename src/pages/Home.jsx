@@ -10,7 +10,6 @@ const Home = () => {
   
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
-  // 🚀 Naya School Name
   const schoolName = 'THE PACIFIC CAMBRIDGE SCHOOL'; 
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -25,7 +24,6 @@ const Home = () => {
       return;
     }
 
-    // 🚀 Auto Class Select (Agar teacher ki class assigned hai)
     if (teacherData.assignedClass) {
       setSelectedClass(teacherData.assignedClass);
     }
@@ -58,17 +56,24 @@ const Home = () => {
     navigate(`/scan?class=${selectedClass}`);
   };
 
+  const handleManualAttendance = () => {
+    if (!selectedClass) {
+      alert("Please select a class first!");
+      return;
+    }
+    navigate(`/manual-attendance?class=${selectedClass}`);
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col pb-20 relative">
       <header className="bg-slate-800 p-6 rounded-b-3xl shadow-lg border-b border-slate-700">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            {/* 🚀 Naya Logo */}
             <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-blue-900/50 p-1 overflow-hidden">
               <img src="/logo.png" alt="Logo" className="h-full w-full object-contain" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white tracking-wide truncate max-w-[180px] leading-tight" title={schoolName}>THE PACIFIC CAMBRIDGE SCHOOL</h1>
+              <h1 className="text-sm font-bold text-white tracking-wide truncate max-w-[180px] leading-tight" title={schoolName}>{schoolName}</h1>
               <p className="text-xs text-blue-400 font-medium mt-0.5">Teacher Dashboard</p>
             </div>
           </div>
@@ -95,58 +100,74 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl text-center mb-8">
-          <div className="h-20 w-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-             <span className="text-4xl text-blue-400">📷</span>
-          </div>
-          <h3 className="text-white font-bold text-xl mb-2">Scan Student ID</h3>
-          <p className="text-slate-400 text-sm mb-6">
-            {teacherData.assignedClass 
-              ? `You are assigned to Class ${teacherData.assignedClass}.` 
-              : 'Select the class you are scanning for today.'}
-          </p>
+        {/* Class Selection */}
+        <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl mb-8">
+          <h3 className="text-white font-bold text-lg mb-4">Select Class</h3>
+          <select 
+            value={selectedClass} 
+            onChange={(e) => setSelectedClass(e.target.value)}
+            disabled={!!teacherData.assignedClass}
+            className={`w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-center appearance-none ${
+              teacherData.assignedClass ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+          >
+            <option value="">-- Select Class --</option>
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            <option value="3">Class 3</option>
+            <option value="4">Class 4</option>
+            <option value="5">Class 5</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+          </select>
+          {teacherData.assignedClass && (
+            <p className="text-xs text-slate-500 mt-2">🔒 Class locked by Admin</p>
+          )}
+        </div>
+
+        {/* 🚀 2 Options: Scan ya Manual */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           
-          <div className="mb-6">
-            <select 
-              value={selectedClass} 
-              onChange={(e) => setSelectedClass(e.target.value)}
-              disabled={!!teacherData.assignedClass}
-              className={`w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 font-bold text-center appearance-none ${
-                teacherData.assignedClass ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
+          {/* Option 1: QR Scan */}
+          <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl text-center">
+            <div className="h-16 w-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
+               <span className="text-3xl text-blue-400">📷</span>
+            </div>
+            <h3 className="text-white font-bold text-lg mb-2">Scan QR Code</h3>
+            <p className="text-slate-400 text-xs mb-4">Scan student ID card for attendance.</p>
+            <button 
+              onClick={handleStartScan}
+              className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-500 transition shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2 text-sm"
             >
-              <option value="">-- Select Class --</option>
-              <option value="1">Class 1</option>
-              <option value="2">Class 2</option>
-              <option value="3">Class 3</option>
-              <option value="4">Class 4</option>
-              <option value="5">Class 5</option>
-              <option value="6">Class 6</option>
-              <option value="7">Class 7</option>
-              <option value="8">Class 8</option>
-              <option value="9">Class 9</option>
-              <option value="10">Class 10</option>
-            </select>
-            {teacherData.assignedClass && (
-              <p className="text-xs text-slate-500 mt-2">🔒 Class locked by Admin</p>
-            )}
+              📷 Start Scanning
+            </button>
           </div>
 
-          <button 
-            onClick={handleStartScan}
-            className="w-full bg-blue-600 text-white font-bold py-4 px-4 rounded-xl hover:bg-blue-500 transition duration-200 shadow-lg shadow-blue-900/50 flex items-center justify-center gap-3 text-lg"
-          >
-            <span>Start Scanning</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          </button>
+          {/* Option 2: Manual Attendance */}
+          <div className="bg-slate-800 rounded-3xl p-6 border border-slate-700 shadow-xl text-center">
+            <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+               <span className="text-3xl text-emerald-400">✍️</span>
+            </div>
+            <h3 className="text-white font-bold text-lg mb-2">Manual Attendance</h3>
+            <p className="text-slate-400 text-xs mb-4">If student forgot ID card, mark manually.</p>
+            <button 
+              onClick={handleManualAttendance}
+              className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-2 text-sm"
+            >
+              ✍️ Manual Entry
+            </button>
+          </div>
         </div>
 
         <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50">
           <h4 className="text-slate-300 font-bold mb-3 text-sm">Quick Instructions:</h4>
           <ul className="text-slate-400 text-sm space-y-2">
-            <li className="flex items-start gap-2"><span className="text-blue-500">1.</span> Ensure you select the correct class before scanning.</li>
-            <li className="flex items-start gap-2"><span className="text-blue-500">2.</span> The app will reject students from other classes.</li>
-            <li className="flex items-start gap-2"><span className="text-blue-500">3.</span> A green checkmark means attendance was marked successfully.</li>
+            <li className="flex items-start gap-2"><span className="text-blue-500">1.</span> Select the correct class first.</li>
+            <li className="flex items-start gap-2"><span className="text-blue-500">2.</span> Use QR Scan for normal attendance.</li>
+            <li className="flex items-start gap-2"><span className="text-blue-500">3.</span> Use Manual Entry if ID card is forgotten.</li>
           </ul>
         </div>
       </main>
