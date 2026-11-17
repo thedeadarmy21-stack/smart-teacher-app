@@ -85,6 +85,21 @@ const Scan = () => {
     }
   };
 
+  // 🚀 NAYA: Scanner ko manual band karne ka function
+  const stopScanner = () => {
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.stop().then(() => {
+          if (scannerRef.current) {
+            scannerRef.current.clear();
+            scannerRef.current = null;
+          }
+        }).catch((err) => console.error("Stop error:", err));
+      } catch(e) {}
+    }
+    navigate(role === 'admin' ? '/admin-attendance' : '/home');
+  };
+
   const handleScanSuccess = async (decodedText) => {
     if (loading) return;
     setLoading(true);
@@ -96,13 +111,11 @@ const Scan = () => {
       let body = {};
 
       if (role === 'admin') {
-        // Admin ke liye dono scan handle karo
         url = adminScanType === 'teacher'
           ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/scan'
           : 'https://smart-attendance-backend-one.vercel.app/api/attendance/admin-scan';
         body = { qrCode: decodedText };
       } else {
-        // Teacher sirf student scan karega
         url = 'https://smart-attendance-backend-one.vercel.app/api/attendance/scan';
         body = { qrCode: decodedText, targetClass: targetClass };
       }
@@ -176,7 +189,7 @@ const Scan = () => {
         </div>
       </header>
 
-      {/* 🚀 Admin ke liye Toggle (Teacher/Student) */}
+      {/* Admin ke liye Toggle (Teacher/Student) */}
       {role === 'admin' && (
         <div className="p-3 flex justify-center">
           <div className="flex bg-[#121212] p-1 rounded-xl border border-red-900/30 w-full max-w-xs">
@@ -263,6 +276,16 @@ const Scan = () => {
             </div>
           )}
         </div>
+
+        {/* 🚀 NAYA: Stop/Cancel Scanning Button */}
+        {!scanResult && !loading && !error && (
+          <button
+            onClick={stopScanner}
+            className="mt-4 w-full max-w-sm bg-red-100/10 text-red-400 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition text-sm flex items-center justify-center gap-2 border border-red-900/30"
+          >
+            ❌ Cancel & Go Back
+          </button>
+        )}
       </main>
 
       {/* Bottom Nav */}
