@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Scan from './pages/Scan';
-import ManualAttendance from './pages/ManualAttendance'; // 🚀 Naya Page
+import ManualAttendance from './pages/ManualAttendance'; 
+import TodayAttendance from './pages/TodayAttendance'; // Agar yeh file exist karti hai toh
+import TeacherProfile from './pages/TeacherProfile'; // Profile file add ki
 
 // ✅ Admin Only Protected Route
 const AdminRoute = ({ children }) => {
@@ -33,9 +35,9 @@ function App() {
         {/* Teacher Routes */}
         <Route path="/home" element={<TeacherRoute><Home /></TeacherRoute>} />
         <Route path="/scan" element={<TeacherRoute><Scan /></TeacherRoute>} />
-        
-        {/* 🚀 Manual Attendance Route */}
         <Route path="/manual-attendance" element={<TeacherRoute><ManualAttendance /></TeacherRoute>} />
+        <Route path="/today-attendance" element={<TeacherRoute><TodayAttendance /></TeacherRoute>} />
+        <Route path="/profile" element={<TeacherRoute><TeacherProfile /></TeacherRoute>} /> {/* Profile Route */}
         
         {/* Admin Route */}
         <Route path="/admin-attendance" element={<AdminRoute><Scan /></AdminRoute>} />

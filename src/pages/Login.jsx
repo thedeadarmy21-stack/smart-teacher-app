@@ -5,7 +5,7 @@ import axios from 'axios';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loginType, setLoginType] = useState('teacher'); // 👈 'teacher' or 'admin'
+  const [loginType, setLoginType] = useState('teacher'); 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -23,7 +23,6 @@ const Login = () => {
 
       const { token, teacher } = response.data;
 
-      // 🚀 Check karo ke role login type se match karta hai ya nahi
       if (loginType === 'admin' && teacher.role !== 'admin') {
         throw new Error('Access denied. Only admin can login here.');
       }
@@ -47,60 +46,63 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      <div className="bg-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-slate-700">
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
+      <div className="bg-[#121212] p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-red-900/30 relative overflow-hidden">
         
-        {/* 🚀 Logo & School Name */}
-        <div className="text-center mb-8">
-          <div className="h-24 w-24 mx-auto mb-4 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
+        {/* Background Glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+        {/* Logo & School Name */}
+        <div className="text-center mb-8 relative z-10">
+          <div className="h-20 w-20 mx-auto mb-4 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
             <img src="/logo.png" alt="School Logo" className="h-full w-full object-contain" />
           </div>
-          <h2 className="text-lg font-extrabold text-white tracking-tight leading-tight uppercase">The Pacific Cambridge School</h2>
-          <p className="text-slate-400 text-sm mt-1">Teacher / Admin Portal</p>
+          <h2 className="text-base font-extrabold text-white tracking-tight leading-tight uppercase">The Pacific Cambridge School</h2>
+          <p className="text-slate-400 text-xs mt-1">Teacher / Admin Portal</p>
         </div>
 
-        {/* 🚀 Toggle Button */}
-        <div className="flex bg-slate-900 p-1 rounded-xl mb-6 border border-slate-700">
+        {/* Toggle Button */}
+        <div className="flex bg-[#0a0a0a] p-1 rounded-xl mb-6 border border-slate-800 relative z-10">
           <button
             onClick={() => setLoginType('teacher')}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-              loginType === 'teacher' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+              loginType === 'teacher' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
             👨‍🏫 Teacher
           </button>
           <button
             onClick={() => setLoginType('admin')}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-              loginType === 'admin' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+              loginType === 'admin' ? 'bg-red-700 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
             👑 Admin
           </button>
         </div>
 
-        {error && <div className="bg-red-900/50 text-red-400 p-3 rounded-xl mb-6 text-sm font-semibold text-center border border-red-800">{error}</div>}
+        {error && <div className="bg-red-500/10 text-red-400 p-2.5 rounded-lg mb-4 text-xs font-semibold text-center border border-red-500/20 relative z-10">{error}</div>}
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4 relative z-10">
           <div>
-            <label className="block text-slate-400 text-sm font-bold mb-2">Username</label>
+            <label className="block text-slate-400 text-xs font-bold mb-1.5 uppercase tracking-wider">Username</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="w-full px-4 py-3 bg-[#0a0a0a] border border-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition text-sm"
               placeholder="Enter username"
               required
             />
           </div>
 
           <div>
-            <label className="block text-slate-400 text-sm font-bold mb-2">Password</label>
+            <label className="block text-slate-400 text-xs font-bold mb-1.5 uppercase tracking-wider">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="w-full px-4 py-3 bg-[#0a0a0a] border border-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition text-sm"
               placeholder="Enter password"
               required
             />
@@ -109,9 +111,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg mt-4 ${
-              loginType === 'admin' ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-900/50' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/50'
-            }`}
+            className="w-full text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 mt-2 bg-red-600 hover:bg-red-700 text-sm shadow-lg shadow-red-900/20"
           >
             {loading ? 'Logging in...' : `Login as ${loginType === 'admin' ? 'Admin' : 'Teacher'}`}
           </button>

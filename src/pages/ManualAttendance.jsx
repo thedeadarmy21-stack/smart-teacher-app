@@ -16,12 +16,11 @@ const ManualAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [marking, setMarking] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
-  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'search'
+  const [activeTab, setActiveTab] = useState('list');
 
   const token = localStorage.getItem('teacherToken');
   const teacherData = JSON.parse(localStorage.getItem('teacherData') || '{}');
 
-  // 🚀 Fetch Students by Class
   const fetchStudentsByClass = async () => {
     if (!selectedClass) return;
     setLoading(true);
@@ -42,7 +41,6 @@ const ManualAttendance = () => {
     if (selectedClass) fetchStudentsByClass();
   }, [selectedClass]);
 
-  // 🚀 Mark Attendance
   const handleMarkAttendance = async (studentId, studentName) => {
     if (!window.confirm(`Mark ${studentName} as present?`)) return;
     
@@ -56,7 +54,6 @@ const ManualAttendance = () => {
       
       setMsg({ type: 'success', text: `✅ ${studentName} marked ${res.data.status.toUpperCase()} at ${res.data.timeIn}` });
       
-      // Update local state
       if (activeTab === 'list') {
         setStudents(prev => prev.map(s => 
           s._id === studentId ? { ...s, attendanceStatus: res.data.status, attendanceTime: res.data.timeIn } : s
@@ -73,7 +70,6 @@ const ManualAttendance = () => {
     }
   };
 
-  // 🚀 Search Student
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -97,31 +93,29 @@ const ManualAttendance = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col pb-20">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col pb-20 text-white">
       
-      {/* Header */}
-      <header className="bg-slate-800 p-4 md:p-6 shadow-lg border-b border-slate-700 sticky top-0 z-20">
+      <header className="bg-[#121212] p-4 shadow-md border-b border-red-900/30 sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/home')} className="text-slate-400 hover:text-white p-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+          <button onClick={() => navigate('/home')} className="text-slate-400 hover:text-white p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div>
-            <h1 className="text-lg font-bold text-white">Manual Attendance</h1>
-            <p className="text-xs text-blue-400">Mark students without ID card</p>
+            <h1 className="text-sm font-bold">Manual Attendance</h1>
+            <p className="text-[9px] text-red-400 font-bold uppercase tracking-wider">Mark without ID card</p>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-3 space-y-3">
         
-        {/* Class Selector */}
-        <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700 mb-4">
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Select Class</label>
+        <div className="bg-[#121212] p-3 rounded-xl border border-red-900/20">
+          <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Select Class</label>
           <select 
             value={selectedClass} 
             onChange={(e) => setSelectedClass(e.target.value)}
             disabled={!!teacherData.assignedClass}
-            className={`w-full px-4 py-3 bg-slate-900 border border-slate-700 text-white rounded-xl font-bold text-center ${
+            className={`w-full px-3 py-2 bg-[#0a0a0a] border border-red-900/30 text-white rounded-lg font-bold text-center text-xs ${
               teacherData.assignedClass ? 'opacity-70 cursor-not-allowed' : ''
             }`}
           >
@@ -139,51 +133,48 @@ const ManualAttendance = () => {
           </select>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-slate-800 p-1 rounded-2xl border border-slate-700 mb-4">
+        <div className="flex bg-[#121212] p-1 rounded-xl border border-red-900/20">
           <button
             onClick={() => setActiveTab('list')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'list' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              activeTab === 'list' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400'
             }`}
           >
             📋 Class List
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              activeTab === 'search' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              activeTab === 'search' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400'
             }`}
           >
-            🔍 Search Student
+            🔍 Search
           </button>
         </div>
 
-        {/* Messages */}
         {msg.text && (
-          <div className={`p-3 rounded-xl mb-4 text-sm font-bold border ${
-            msg.type === 'success' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' : 'bg-red-900/30 text-red-400 border-red-800'
+          <div className={`p-2.5 rounded-lg text-[10px] font-bold border ${
+            msg.type === 'success' ? 'bg-emerald-900/20 text-emerald-400 border-emerald-900/30' : 'bg-red-900/20 text-red-400 border-red-900/30'
           }`}>
             {msg.text}
           </div>
         )}
 
-        {/* Tab 1: List View */}
         {activeTab === 'list' && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {!selectedClass ? (
-              <p className="text-center text-slate-500 py-10">Please select a class first.</p>
+              <p className="text-center text-slate-500 py-8 text-xs">Please select a class first.</p>
             ) : loading ? (
-              <div className="text-center py-10">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
               </div>
             ) : students.length === 0 ? (
-              <p className="text-center text-slate-500 py-10">No students in this class.</p>
+              <p className="text-center text-slate-500 py-8 text-xs">No students in this class.</p>
             ) : (
               students.map(student => (
-                <div key={student._id} className="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-900/50 text-blue-400 flex items-center justify-center font-bold overflow-hidden">
+                <div key={student._id} className="bg-[#121212] p-2.5 rounded-xl border border-red-900/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold overflow-hidden text-xs">
                       {student.profilePicture ? (
                         <img src={student.profilePicture} alt={student.name} className="h-full w-full object-cover" />
                       ) : (
@@ -191,16 +182,16 @@ const ManualAttendance = () => {
                       )}
                     </div>
                     <div>
-                      <p className="text-white font-bold text-sm">{student.name}</p>
-                      <p className="text-xs text-slate-400">Roll: {student.rollNumber}</p>
+                      <p className="text-white font-bold text-xs">{student.name}</p>
+                      <p className="text-[9px] text-slate-400">Roll: {student.rollNumber}</p>
                     </div>
                   </div>
                   
                   {student.attendanceStatus ? (
-                    <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase border ${
-                      student.attendanceStatus === 'present' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' :
-                      student.attendanceStatus === 'late' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-800' :
-                      'bg-red-900/30 text-red-400 border-red-800'
+                    <span className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase border ${
+                      student.attendanceStatus === 'present' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      student.attendanceStatus === 'late' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                      'bg-red-500/10 text-red-400 border-red-500/20'
                     }`}>
                       {student.attendanceStatus === 'present' ? '🟢' : student.attendanceStatus === 'late' ? '🟡' : '🔴'} {student.attendanceStatus}
                     </span>
@@ -208,7 +199,7 @@ const ManualAttendance = () => {
                     <button
                       onClick={() => handleMarkAttendance(student._id, student.name)}
                       disabled={marking}
-                      className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 transition shadow-lg flex items-center gap-1.5"
+                      className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold hover:bg-emerald-700 transition flex items-center gap-1"
                     >
                       ✅ Mark
                     </button>
@@ -219,38 +210,37 @@ const ManualAttendance = () => {
           </div>
         )}
 
-        {/* Tab 2: Search */}
         {activeTab === 'search' && (
           <div>
-            <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <form onSubmit={handleSearch} className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Enter Roll No or Name..."
-                className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Roll No or Name..."
+                className="flex-1 px-3 py-2 bg-[#121212] border border-red-900/30 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-xs"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-blue-500 transition shadow-lg"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition text-xs"
               >
                 🔍
               </button>
             </form>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {loading ? (
-                <div className="text-center py-10">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
                 </div>
               ) : searchResults.length === 0 ? (
-                <p className="text-center text-slate-500 py-10">Search for a student to mark attendance.</p>
+                <p className="text-center text-slate-500 py-8 text-xs">Search for a student to mark attendance.</p>
               ) : (
                 searchResults.map(student => (
-                  <div key={student._id} className="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-900/50 text-blue-400 flex items-center justify-center font-bold overflow-hidden">
+                  <div key={student._id} className="bg-[#121212] p-2.5 rounded-xl border border-red-900/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold overflow-hidden text-xs">
                         {student.profilePicture ? (
                           <img src={student.profilePicture} alt={student.name} className="h-full w-full object-cover" />
                         ) : (
@@ -258,16 +248,16 @@ const ManualAttendance = () => {
                         )}
                       </div>
                       <div>
-                        <p className="text-white font-bold text-sm">{student.name}</p>
-                        <p className="text-xs text-slate-400">Roll: {student.rollNumber} | Class: {student.className}</p>
+                        <p className="text-white font-bold text-xs">{student.name}</p>
+                        <p className="text-[9px] text-slate-400">Roll: {student.rollNumber} | {student.className}</p>
                       </div>
                     </div>
                     
                     {student.attendanceStatus ? (
-                      <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase border ${
-                        student.attendanceStatus === 'present' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800' :
-                        student.attendanceStatus === 'late' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-800' :
-                        'bg-red-900/30 text-red-400 border-red-800'
+                      <span className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase border ${
+                        student.attendanceStatus === 'present' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        student.attendanceStatus === 'late' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                        'bg-red-500/10 text-red-400 border-red-500/20'
                       }`}>
                         {student.attendanceStatus === 'present' ? '🟢' : student.attendanceStatus === 'late' ? '🟡' : '🔴'} {student.attendanceStatus}
                       </span>
@@ -275,7 +265,7 @@ const ManualAttendance = () => {
                       <button
                         onClick={() => handleMarkAttendance(student._id, student.name)}
                         disabled={marking}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-500 transition shadow-lg flex items-center gap-1.5"
+                        className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold hover:bg-emerald-700 transition flex items-center gap-1"
                       >
                         ✅ Mark
                       </button>
