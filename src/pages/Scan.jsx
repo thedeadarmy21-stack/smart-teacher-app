@@ -9,7 +9,8 @@ const Scan = () => {
   const [loading, setLoading] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
   
-  // 🚀 NAYA: Admin ke liye Scan Type
+  // 🚀 NAYA: Camera control state
+  const [isScanning, setIsScanning] = useState(false);
   const [adminScanType, setAdminScanType] = useState('teacher'); 
 
   const navigate = useNavigate();
@@ -53,6 +54,8 @@ const Scan = () => {
   }, [token, navigate, targetClass, role, adminScanType]);
 
   const startScanner = async () => {
+    setError('');
+    setIsScanning(true);
     try {
       if (scannerRef.current) {
         try {
@@ -71,21 +74,23 @@ const Scan = () => {
           if (scannerRef.current) {
              scannerRef.current.stop().then(() => {
                scannerRef.current.clear();
+               setIsScanning(false);
                handleScanSuccess(decodedText);
              }).catch((err) => console.error("Stop error:", err));
           }
         },
         (errorMessage) => {}
       ).catch((err) => {
-        setError("Camera start nahi ho raha.");
+        setError("Camera start nahi ho raha. Permission check karein.");
+        setIsScanning(false);
       });
 
     } catch (err) {
       setError("Scanner initialize nahi ho raha.");
+      setIsScanning(false);
     }
   };
 
-  // 🚀 NAYA: Scanner ko manual band karne ka function
   const stopScanner = () => {
     if (scannerRef.current) {
       try {
@@ -94,10 +99,12 @@ const Scan = () => {
             scannerRef.current.clear();
             scannerRef.current = null;
           }
+          setIsScanning(false);
         }).catch((err) => console.error("Stop error:", err));
       } catch(e) {}
+    } else {
+      setIsScanning(false);
     }
-    navigate(role === 'admin' ? '/admin-attendance' : '/home');
   };
 
   const handleScanSuccess = async (decodedText) => {
@@ -142,24 +149,7 @@ const Scan = () => {
     setScanResult(null);
     setError('');
     setLoading(false);
-    setTimeout(() => { startScanner(); }, 300);
   };
-
-  useEffect(() => {
-    if (!token) return;
-    if (role !== 'admin' && !targetClass) return;
-    
-    const timer = setTimeout(() => { startScanner(); }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(() => {});
-        } catch(e) {}
-      }
-    };
-  }, [token, targetClass, role, adminScanType]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col pb-20 text-white">
@@ -190,7 +180,7 @@ const Scan = () => {
       </header>
 
       {/* Admin ke liye Toggle (Teacher/Student) */}
-      {role === 'admin' && (
+      {role === 'admin' && !isScanning && !scanResult && (
         <div className="p-3 flex justify-center">
           <div className="flex bg-[#121212] p-1 rounded-xl border border-red-900/30 w-full max-w-xs">
             <button
@@ -214,77 +204,97 @@ const Scan = () => {
       )}
 
       <main className="flex-1 p-3 flex flex-col items-center mt-2">
-        <div className="w-full max-w-sm bg-[#121212] rounded-2xl shadow-xl overflow-hidden border border-red-900/30 relative">
-          
-          <div className={`p-3 relative ${scanResult || loading || error ? 'hidden' : 'block'}`}>
-            <div className="absolute top-4 left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
-            <div id="reader" className="w-full rounded-xl overflow-hidden bg-black border border-red-900/30 min-h-[220px]"></div>
-            <div className="mt-4 text-center">
-              <p className="text-slate-400 text-[10px] font-medium flex items-center justify-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-                Align QR code within the frame
-              </p>
+        
+        {/* 🚀 NAYA: Start Button (Jab scan band ho) */}
+        {!isScanning && !scanResult && !loading && (
+          <div className="w-full max-w-sm text-center mt-10">
+            <div className="h-24 w-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-red-500/20">
+              <span className="text-5xl">📷</span>
+            </div>
+            <h2 className="text-lg font-bold text-white mb-2">Ready to Scan</h2>
+            <p className="text-slate-400 text-xs mb-8">Click the button below to open the camera.</p>
+            <button 
+              onClick={startScanner}
+              className="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl hover:bg-red-700 transition shadow-lg text-sm flex items-center justify-center gap-2"
+            >
+              📷 Start Scanning
+            </button>
+          </div>
+        )}
+
+        {/* 🚀 Scanner Area (Sirf tab dikhega jab scan on ho) */}
+        {isScanning && (
+          <div className="w-full max-w-sm bg-[#121212] rounded-2xl shadow-xl overflow-hidden border border-red-900/30 relative">
+            <div className="p-3 relative">
+              <div className="absolute top-4 left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)] animate-scanline z-20 pointer-events-none rounded-full"></div>
+              <div id="reader" className="w-full rounded-xl overflow-hidden bg-black border border-red-900/30 min-h-[220px]"></div>
+              <div className="mt-4 text-center">
+                <p className="text-slate-400 text-[10px] font-medium flex items-center justify-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  Align QR code within the frame
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          {loading && (
-            <div className="p-10 text-center animate-pulse">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 border-2 border-red-900 border-t-red-500 mb-3"></div>
-              <p className="text-red-500 font-bold tracking-wider text-xs">MARKING ATTENDANCE...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="p-6 text-center animate-pop">
-              <div className="text-4xl mb-2">⚠️</div>
-              <div className="bg-red-900/20 text-red-400 p-3 rounded-xl border border-red-900/30 text-xs font-semibold mb-4">
-                {error}
-              </div>
-              <button onClick={resetScanner} className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold w-full hover:bg-red-700 transition text-xs">
-                Try Again
-              </button>
-            </div>
-          )}
-
-          {scanResult && (
-            <div className="p-6 text-center animate-pop">
-              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-emerald-500/30">
-                <span className="text-4xl">✅</span>
-              </div>
-              <h3 className="text-lg font-extrabold text-emerald-400 mb-1">Attendance Marked!</h3>
-              <p className="text-slate-400 text-[10px] mb-4">Saved successfully.</p>
-              
-              <div className="bg-[#0a0a0a] p-3 rounded-xl border border-red-900/20 mb-5 text-left">
-                <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">{scanResult.type} Name</p>
-                <p className="text-white text-sm font-bold mb-2">{scanResult.name}</p>
-                {scanResult.rollNumber !== 'N/A' && (
-                  <>
-                    <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">Roll Number</p>
-                    <p className="text-slate-300 text-xs font-semibold mb-2">{scanResult.rollNumber}</p>
-                  </>
-                )}
-                <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">Time In</p>
-                <p className="text-red-400 text-sm font-bold">{scanResult.timeIn}</p>
-              </div>
-              
-              <button onClick={resetScanner} className="bg-red-600 text-white px-4 py-3 rounded-xl font-bold w-full hover:bg-red-700 transition text-sm flex items-center justify-center gap-2">
-                <span>📷</span> Scan Next
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 🚀 NAYA: Stop/Cancel Scanning Button */}
-        {!scanResult && !loading && !error && (
+        {/* 🚀 NAYA: Cancel Button (Sirf tab dikhega jab scan on ho) */}
+        {isScanning && (
           <button
             onClick={stopScanner}
             className="mt-4 w-full max-w-sm bg-red-100/10 text-red-400 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition text-sm flex items-center justify-center gap-2 border border-red-900/30"
           >
-            ❌ Cancel & Go Back
+            ❌ Cancel Scanning
           </button>
+        )}
+
+        {loading && (
+          <div className="p-10 text-center animate-pulse">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-2 border-red-900 border-t-red-500 mb-3"></div>
+            <p className="text-red-500 font-bold tracking-wider text-xs">MARKING ATTENDANCE...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="w-full max-w-sm p-6 text-center animate-pop bg-[#121212] rounded-2xl border border-red-900/30 mt-4">
+            <div className="text-4xl mb-2">⚠️</div>
+            <div className="bg-red-900/20 text-red-400 p-3 rounded-xl border border-red-900/30 text-xs font-semibold mb-4">
+              {error}
+            </div>
+            <button onClick={resetScanner} className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold w-full hover:bg-red-700 transition text-xs">
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {scanResult && (
+          <div className="w-full max-w-sm p-6 text-center animate-pop bg-[#121212] rounded-2xl border border-red-900/30 mt-4">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-emerald-500/30">
+              <span className="text-4xl">✅</span>
+            </div>
+            <h3 className="text-lg font-extrabold text-emerald-400 mb-1">Attendance Marked!</h3>
+            <p className="text-slate-400 text-[10px] mb-4">Saved successfully.</p>
+            
+            <div className="bg-[#0a0a0a] p-3 rounded-xl border border-red-900/20 mb-5 text-left">
+              <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">{scanResult.type} Name</p>
+              <p className="text-white text-sm font-bold mb-2">{scanResult.name}</p>
+              {scanResult.rollNumber !== 'N/A' && (
+                <>
+                  <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">Roll Number</p>
+                  <p className="text-slate-300 text-xs font-semibold mb-2">{scanResult.rollNumber}</p>
+                </>
+              )}
+              <p className="text-slate-500 text-[9px] uppercase tracking-widest mb-0.5">Time In</p>
+              <p className="text-red-400 text-sm font-bold">{scanResult.timeIn}</p>
+            </div>
+            
+            <button onClick={resetScanner} className="bg-red-600 text-white px-4 py-3 rounded-xl font-bold w-full hover:bg-red-700 transition text-sm flex items-center justify-center gap-2">
+              <span>📷</span> Scan Next
+            </button>
+          </div>
         )}
       </main>
 
