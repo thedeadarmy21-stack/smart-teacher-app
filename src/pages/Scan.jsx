@@ -8,6 +8,10 @@ const Scan = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
+  
+  // 🚀 NAYA: Admin ke liye Scan Type
+  const [adminScanType, setAdminScanType] = useState('teacher'); 
+
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -29,9 +33,13 @@ const Scan = () => {
     
     const fetchCount = async () => {
       try {
-        const url = role === 'admin' 
-          ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/today' 
-          : 'https://smart-attendance-backend-one.vercel.app/api/attendance/today';
+        let url = 'https://smart-attendance-backend-one.vercel.app/api/attendance/today';
+        
+        if (role === 'admin') {
+          url = adminScanType === 'teacher' 
+            ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/today' 
+            : 'https://smart-attendance-backend-one.vercel.app/api/attendance/today';
+        }
         
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
@@ -42,7 +50,7 @@ const Scan = () => {
       }
     };
     fetchCount();
-  }, [token, navigate, targetClass, role]);
+  }, [token, navigate, targetClass, role, adminScanType]);
 
   const startScanner = async () => {
     try {
@@ -58,10 +66,7 @@ const Scan = () => {
 
       await scanner.start(
         { facingMode: "environment" }, 
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }, 
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
           if (scannerRef.current) {
              scannerRef.current.stop().then(() => {
@@ -72,12 +77,10 @@ const Scan = () => {
         },
         (errorMessage) => {}
       ).catch((err) => {
-        console.error("Camera Start Error:", err);
-        setError("Camera start nahi ho raha. Permission check karein.");
+        setError("Camera start nahi ho raha.");
       });
 
     } catch (err) {
-      console.error("Scanner Init Error:", err);
       setError("Scanner initialize nahi ho raha.");
     }
   };
@@ -89,13 +92,20 @@ const Scan = () => {
     setScanResult(null);
 
     try {
-      const url = role === 'admin'
-        ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/scan'
-        : 'https://smart-attendance-backend-one.vercel.app/api/attendance/scan';
-      
-      const body = role === 'admin'
-        ? { qrCode: decodedText }
-        : { qrCode: decodedText, targetClass: targetClass };
+      let url = '';
+      let body = {};
+
+      if (role === 'admin') {
+        // Admin ke liye dono scan handle karo
+        url = adminScanType === 'teacher'
+          ? 'https://smart-attendance-backend-one.vercel.app/api/teacher-attendance/scan'
+          : 'https://smart-attendance-backend-one.vercel.app/api/attendance/admin-scan';
+        body = { qrCode: decodedText };
+      } else {
+        // Teacher sirf student scan karega
+        url = 'https://smart-attendance-backend-one.vercel.app/api/attendance/scan';
+        body = { qrCode: decodedText, targetClass: targetClass };
+      }
 
       const response = await axios.post(url, body, {
         headers: { Authorization: `Bearer ${token}` }
@@ -105,7 +115,7 @@ const Scan = () => {
         name: response.data.teacherName || response.data.studentName,
         rollNumber: response.data.rollNumber || 'N/A',
         timeIn: response.data.timeIn,
-        type: role === 'admin' ? 'Teacher' : 'Student'
+        type: role === 'admin' ? adminScanType.toUpperCase() : 'Student'
       });
       setTodayCount(prev => prev + 1);
     } catch (err) {
@@ -119,18 +129,14 @@ const Scan = () => {
     setScanResult(null);
     setError('');
     setLoading(false);
-    setTimeout(() => {
-      startScanner();
-    }, 300);
+    setTimeout(() => { startScanner(); }, 300);
   };
 
   useEffect(() => {
     if (!token) return;
     if (role !== 'admin' && !targetClass) return;
     
-    const timer = setTimeout(() => {
-      startScanner();
-    }, 500);
+    const timer = setTimeout(() => { startScanner(); }, 500);
 
     return () => {
       clearTimeout(timer);
@@ -140,12 +146,10 @@ const Scan = () => {
         } catch(e) {}
       }
     };
-  }, [token, targetClass, role]);
+  }, [token, targetClass, role, adminScanType]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col pb-20 text-white">
-      
-      {/* Header */}
       <header className="bg-[#121212] p-4 shadow-md border-b border-red-900/30 flex justify-between items-center sticky top-0 z-20">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-bold border border-red-500/30 text-sm">
@@ -153,10 +157,12 @@ const Scan = () => {
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-wide">
-              {role === 'admin' ? 'Teacher Attendance' : 'Smart School'}
+              {role === 'admin' ? 'Admin Attendance' : 'Smart School'}
             </h1>
             <p className="text-[9px] text-red-400 font-bold uppercase tracking-wider">
-              {role === 'admin' ? 'Scanning Teachers' : `Class ${targetClass}`}
+              {role === 'admin' 
+                ? `Scanning ${adminScanType === 'teacher' ? 'Teachers' : 'Students'}` 
+                : `Class ${targetClass}`}
             </p>
           </div>
         </div>
@@ -169,6 +175,30 @@ const Scan = () => {
           <span className="text-emerald-400 font-bold text-[10px]">{todayCount} Present</span>
         </div>
       </header>
+
+      {/* 🚀 Admin ke liye Toggle (Teacher/Student) */}
+      {role === 'admin' && (
+        <div className="p-3 flex justify-center">
+          <div className="flex bg-[#121212] p-1 rounded-xl border border-red-900/30 w-full max-w-xs">
+            <button
+              onClick={() => { setAdminScanType('teacher'); setScanResult(null); setError(''); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                adminScanType === 'teacher' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400'
+              }`}
+            >
+              👨‍🏫 Teacher
+            </button>
+            <button
+              onClick={() => { setAdminScanType('student'); setScanResult(null); setError(''); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                adminScanType === 'student' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400'
+              }`}
+            >
+              🎓 Student
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 p-3 flex flex-col items-center mt-2">
         <div className="w-full max-w-sm bg-[#121212] rounded-2xl shadow-xl overflow-hidden border border-red-900/30 relative">
